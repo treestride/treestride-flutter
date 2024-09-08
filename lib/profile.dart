@@ -445,152 +445,155 @@ class ProfileState extends State<Profile> {
                         const SizedBox(height: 24),
                         _buildStatsSection(userDataProvider),
                         const SizedBox(height: 24),
-                        Column(
-                          children: [
-                            Container(
-                              width: double.infinity,
-                              alignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFFEFEFE),
-                                borderRadius: BorderRadius.circular(4),
-                                boxShadow: const [
-                                  BoxShadow(
-                                    color: ui.Color(0xFFD4D4D4),
-                                    blurRadius: 2,
-                                    blurStyle: BlurStyle.outer,
-                                  )
-                                ],
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(24.0),
-                                child: Column(
-                                  children: [
-                                    const Icon(
-                                      Icons.directions_walk,
-                                      size: 64,
-                                      color: Color(0xFF08DAD6),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      _formatNumber(
-                                        userDataProvider
-                                            .userData!['totalSteps'],
-                                      ),
-                                      style: const TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    const Text(
-                                      "Total Steps",
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        color: Colors.grey,
-                                      ),
-                                    ),
+                        SizedBox(
+                          width: double.infinity,
+                          child: Column(
+                            children: [
+                              Container(
+                                width: double.infinity,
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFEFEFE),
+                                  borderRadius: BorderRadius.circular(4),
+                                  boxShadow: const [
+                                    BoxShadow(
+                                      color: ui.Color(0xFFD4D4D4),
+                                      blurRadius: 2,
+                                      blurStyle: BlurStyle.outer,
+                                    )
                                   ],
                                 ),
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-                            Container(
-                              width: double.infinity,
-                              alignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFFEFEFE),
-                                borderRadius: BorderRadius.circular(4),
-                                boxShadow: const [
-                                  BoxShadow(
-                                    color: ui.Color(0xFFD4D4D4),
-                                    blurRadius: 2,
-                                    blurStyle: BlurStyle.outer,
-                                  )
-                                ],
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(24.0),
-                                child: Column(
-                                  children: [
-                                    const Icon(
-                                      Icons.star,
-                                      size: 64,
-                                      color: Color(0xFF08DAD6),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      _formatNumber(
-                                        userDataProvider
-                                            .userData!['totalPoints'],
+                                child: Padding(
+                                  padding: const EdgeInsets.all(24.0),
+                                  child: Column(
+                                    children: [
+                                      const Icon(
+                                        Icons.directions_walk,
+                                        size: 64,
+                                        color: Color(0xFF08DAD6),
                                       ),
-                                      style: const TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        _formatNumber(
+                                          userDataProvider
+                                              .userData!['totalSteps'],
+                                        ),
+                                        style: const TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    const Text(
-                                      "Total Points",
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        color: Colors.grey,
+                                      const SizedBox(height: 8),
+                                      const Text(
+                                        "Total Steps",
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: Colors.grey,
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(height: 24),
-                            Container(
-                              width: double.infinity,
-                              alignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFFEFEFE),
-                                borderRadius: BorderRadius.circular(4),
-                                boxShadow: const [
-                                  BoxShadow(
-                                    color: ui.Color(0xFFD4D4D4),
-                                    blurRadius: 2,
-                                    blurStyle: BlurStyle.outer,
-                                  )
-                                ],
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(24.0),
-                                child: Column(
-                                  children: [
-                                    const Icon(
-                                      Icons.emoji_events,
-                                      size: 64,
-                                      color: Color(0xFF08DAD6),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      _formatNumber(
-                                        userDataProvider
-                                            .userData!['missionsCompleted'],
-                                      ),
-                                      style: const TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    const Text(
-                                      "Missions Completed",
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        color: Colors.grey,
-                                      ),
-                                    ),
+                              const SizedBox(height: 24),
+                              Container(
+                                width: double.infinity,
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFEFEFE),
+                                  borderRadius: BorderRadius.circular(4),
+                                  boxShadow: const [
+                                    BoxShadow(
+                                      color: ui.Color(0xFFD4D4D4),
+                                      blurRadius: 2,
+                                      blurStyle: BlurStyle.outer,
+                                    )
                                   ],
                                 ),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(24.0),
+                                  child: Column(
+                                    children: [
+                                      const Icon(
+                                        Icons.star,
+                                        size: 64,
+                                        color: Color(0xFF08DAD6),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        _formatNumber(
+                                          userDataProvider
+                                              .userData!['totalPoints'],
+                                        ),
+                                        style: const TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      const Text(
+                                        "Total Points",
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
                               ),
-                            ),
-                          ],
+                              const SizedBox(height: 24),
+                              Container(
+                                width: double.infinity,
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFEFEFE),
+                                  borderRadius: BorderRadius.circular(4),
+                                  boxShadow: const [
+                                    BoxShadow(
+                                      color: ui.Color(0xFFD4D4D4),
+                                      blurRadius: 2,
+                                      blurStyle: BlurStyle.outer,
+                                    )
+                                  ],
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(24.0),
+                                  child: Column(
+                                    children: [
+                                      const Icon(
+                                        Icons.emoji_events,
+                                        size: 64,
+                                        color: Color(0xFF08DAD6),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        _formatNumber(
+                                          userDataProvider
+                                              .userData!['missionsCompleted'],
+                                        ),
+                                        style: const TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      const Text(
+                                        "Missions Completed",
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         )
                       ],
                     ),
@@ -697,52 +700,55 @@ class ProfileState extends State<Profile> {
   }
 
   Widget _buildStatsSection(UserDataProvider userDataProvider) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Expanded(
-              child: GestureDetector(
-                onTap: () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const PlantedTrees(),
-                    ),
-                  );
-                },
-                child: _buildStatCard(
-                  'Trees Planted',
-                  userDataProvider.userData!['totalTrees'],
-                  Icons.park,
+    return SizedBox(
+      width: double.infinity,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const PlantedTrees(),
+                      ),
+                    );
+                  },
+                  child: _buildStatCard(
+                    'Trees Planted',
+                    userDataProvider.userData!['totalTrees'],
+                    Icons.park,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 24),
-            Expanded(
-              child: GestureDetector(
-                onTap: () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const UserCertificates(),
-                    ),
-                  );
-                },
-                child: _buildStatCard(
-                  'Certificates',
-                  userDataProvider.userData!['certificates'],
-                  Icons.workspace_premium,
+              const SizedBox(width: 24),
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const UserCertificates(),
+                      ),
+                    );
+                  },
+                  child: _buildStatCard(
+                    'Certificates',
+                    userDataProvider.userData!['certificates'],
+                    Icons.workspace_premium,
+                  ),
                 ),
               ),
-            ),
-          ],
-        ),
-      ],
+            ],
+          ),
+        ],
+      ),
     );
   }
 

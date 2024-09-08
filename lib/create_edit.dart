@@ -55,7 +55,11 @@ class CreateEditPostPageState extends State<CreateEditPostPage> {
     String watermarkText = 'treestride/@$username';
 
     // Create a new image for the watermark
-    img.Image watermark = img.Image(width: 300, height: 50);
+    img.Image watermark = img.Image(
+      width: 250,
+      height: 24,
+      backgroundColor: img.ColorFloat16.rgba(255, 255, 255, 0.5),
+    );
     img.drawString(
       watermark,
       watermarkText,
