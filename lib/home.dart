@@ -11,6 +11,7 @@ import 'package:treestride/jogging.dart';
 import 'package:treestride/running.dart';
 
 import 'announcements.dart';
+import 'fitness.dart';
 import 'offline.dart';
 import 'user_feed.dart';
 import 'leaderboard.dart';
@@ -186,7 +187,12 @@ class HomePageState extends State<HomePage> {
                   ),
                   onPressed: () {
                     Navigator.of(context).pop();
-                    // Switch logic
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const FitnessMode(),
+                      ),
+                    );
                   },
                   child: const Row(
                     crossAxisAlignment: CrossAxisAlignment.center,

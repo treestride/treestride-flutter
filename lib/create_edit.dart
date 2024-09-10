@@ -54,17 +54,19 @@ class CreateEditPostPageState extends State<CreateEditPostPage> {
     // Prepare the watermark text
     String watermarkText = 'treestride/@$username';
 
-    // Create a new image for the watermark
+    // Create a new transparent image for the watermark
     img.Image watermark = img.Image(
       width: 250,
       height: 24,
-      backgroundColor: img.ColorFloat16.rgba(255, 255, 255, 0.5),
+      backgroundColor: img.ColorUint8.rgba(0, 0, 0, 0),
     );
+
+    // Draw the text onto the transparent image
     img.drawString(
       watermark,
       watermarkText,
+      font: img.arial24,
       color: img.ColorRgba8(255, 255, 255, 200),
-      font: img.arial14,
     );
 
     // Calculate position (bottom-right corner)
@@ -77,7 +79,7 @@ class CreateEditPostPageState extends State<CreateEditPostPage> {
       watermark,
       dstX: x,
       dstY: y,
-      blend: img.BlendMode.alpha,
+      blend: img.BlendMode.overlay,
     );
 
     // Get temporary directory
@@ -227,7 +229,7 @@ class CreateEditPostPageState extends State<CreateEditPostPage> {
                           fillColor: Colors.grey[200],
                         ),
                       ),
-                      const SizedBox(height: 14),
+                      const SizedBox(height: 24),
                       if (_image != null)
                         Column(
                           children: [
@@ -260,7 +262,7 @@ class CreateEditPostPageState extends State<CreateEditPostPage> {
                                 ],
                               ),
                             ),
-                            const SizedBox(height: 14)
+                            const SizedBox(height: 24)
                           ],
                         )
                       else if (widget.initialImageUrl != null)
@@ -275,7 +277,7 @@ class CreateEditPostPageState extends State<CreateEditPostPage> {
                                 fit: BoxFit.cover,
                               ),
                             ),
-                            const SizedBox(height: 14)
+                            const SizedBox(height: 24)
                           ],
                         ),
                       ElevatedButton(

@@ -289,15 +289,14 @@ class UserDataDisplay extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                Column(
                   children: [
                     _buildStatCard(
                       'Total Steps',
                       '${userData['totalSteps']}',
                       Icons.directions_walk,
                     ),
-                    const SizedBox(width: 24),
+                    const SizedBox(height: 24),
                     _buildStatCard(
                       'Total Points',
                       '${userData['totalPoints']}',
@@ -306,15 +305,14 @@ class UserDataDisplay extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                Column(
                   children: [
                     _buildStatCard(
                       'Trees Planted',
                       '${userData['totalTrees']}',
                       Icons.park,
                     ),
-                    const SizedBox(width: 24),
+                    const SizedBox(height: 24),
                     _buildStatCard(
                       'Missions Completed',
                       '${userData['missionsCompleted']}',
@@ -331,44 +329,47 @@ class UserDataDisplay extends StatelessWidget {
   }
 
   Widget _buildStatCard(String title, String value, IconData icon) {
-    return Expanded(
-      child: Container(
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: const Color(0xFFFEFEFE),
-          borderRadius: BorderRadius.circular(4),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0xFFD4D4D4),
-              blurRadius: 2,
-              blurStyle: BlurStyle.outer,
-            )
+    return Container(
+      width: double.infinity,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: const Color(0xFFFEFEFE),
+        borderRadius: BorderRadius.circular(4),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0xFFD4D4D4),
+            blurRadius: 2,
+            blurStyle: BlurStyle.outer,
+          )
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              size: 64,
+              color: const Color(0xFF08DAD6),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _formatNumber(value),
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.grey[600],
+              ),
+              textAlign: TextAlign.center,
+            ),
           ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            children: [
-              Icon(icon, size: 32, color: const Color(0xFF08DAD6)),
-              const SizedBox(height: 8),
-              Text(
-                _formatNumber(value),
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey[600],
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
         ),
       ),
     );

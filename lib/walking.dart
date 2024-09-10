@@ -48,7 +48,7 @@ class WalkingCounterHome extends StatefulWidget {
 class WalkingCounterHomeState extends State<WalkingCounterHome>
     with WidgetsBindingObserver {
   bool _isCounting = false;
-  final double _sensitivity = 8;
+  final double _sensitivity = 6;
   double _lastMagnitude = 0;
   int _walkingSteps = 0;
   DateTime? _selectedDate;

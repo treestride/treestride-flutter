@@ -312,13 +312,32 @@ class PlantedTreesState extends State<PlantedTrees> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Status: ${request['plantingStatus']}',
+                    'Planting Status: ${request['plantingStatus']}',
                     style: TextStyle(
                       fontSize: 12,
                       color: request['plantingStatus'] == 'pending'
                           ? Colors.orange
                           : Colors.green,
                       fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {},
+                      style: ElevatedButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        backgroundColor: const Color(0xFF08DAD6),
+                      ),
+                      child: const Text(
+                        "VIEW WHERE",
+                        style: TextStyle(
+                          color: Colors.black,
+                        ),
+                      ),
                     ),
                   ),
                 ],

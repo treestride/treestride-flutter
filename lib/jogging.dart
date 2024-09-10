@@ -49,7 +49,7 @@ class JoggingCounterHomeState extends State<JoggingCounterHome>
     with WidgetsBindingObserver {
   bool _isCounting = false;
   double _lastMagnitude = 0;
-  final double _sensitivity = 8;
+  final double _sensitivity = 6;
   int _joggingSteps = 0;
   DateTime? _selectedDate;
   DateTime _currentDate = DateTime.now();
