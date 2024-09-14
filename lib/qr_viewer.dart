@@ -349,10 +349,10 @@ class UserDataDisplay extends StatelessWidget {
           children: [
             Icon(
               icon,
-              size: 64,
+              size: 48,
               color: const Color(0xFF08DAD6),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 14),
             Text(
               _formatNumber(value),
               style: const TextStyle(
@@ -360,7 +360,7 @@ class UserDataDisplay extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 14),
             Text(
               title,
               style: TextStyle(

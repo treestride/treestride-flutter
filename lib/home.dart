@@ -190,7 +190,7 @@ class HomePageState extends State<HomePage> {
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const FitnessMode(),
+                        builder: (context) => const Fitness(),
                       ),
                     );
                   },
@@ -604,7 +604,6 @@ class HomePageState extends State<HomePage> {
               toolbarHeight: 64,
               centerTitle: true,
               title: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   GestureDetector(
                     onTap: () => _showUserProfile(userDataProvider),
@@ -627,7 +626,6 @@ class HomePageState extends State<HomePage> {
                   const SizedBox(width: 14),
                   Expanded(
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           userDataProvider.userData!['username'],
@@ -654,10 +652,11 @@ class HomePageState extends State<HomePage> {
                   children: [
                     IconButton(
                       onPressed: () {
-                        Navigator.pushReplacement(
+                        Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const AnnouncementPage(),
+                            builder: (context) =>
+                                const AnnouncementPage(previousPage: Home()),
                           ),
                         );
                       },

@@ -266,7 +266,6 @@ class PlantedTreesState extends State<PlantedTrees> {
               request['treeImage'] ?? '',
               fit: BoxFit.cover,
               width: 120,
-              height: 150,
             ),
           ),
           Expanded(

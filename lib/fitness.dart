@@ -6,8 +6,37 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import 'announcements.dart';
+import 'home.dart';
+import 'jogging_fitness.dart';
 import 'login.dart';
+import 'running_fitness.dart';
 import 'user_data_provider.dart';
+import 'walking_fitness.dart';
+
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(const Fitness());
+}
+
+class Fitness extends StatelessWidget {
+  const Fitness({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      theme: ThemeData(
+        textTheme: GoogleFonts.exo2TextTheme(
+          Theme.of(context).textTheme,
+        ),
+        primaryTextTheme: GoogleFonts.exoTextTheme(
+          Theme.of(context).primaryTextTheme,
+        ),
+      ),
+      home: const FitnessMode(),
+    );
+  }
+}
 
 class FitnessMode extends StatefulWidget {
   const FitnessMode({super.key});
@@ -125,7 +154,7 @@ class FitnessState extends State<FitnessMode> {
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const FitnessMode(),
+                        builder: (context) => const Home(),
                       ),
                     );
                   },
@@ -170,28 +199,20 @@ class FitnessState extends State<FitnessMode> {
   @override
   Widget build(BuildContext context) {
     return Consumer<UserDataProvider>(
-        builder: (context, userDataProvider, child) {
-      if (userDataProvider.userData == null) {
-        return const Scaffold(
-          backgroundColor: Color(0xFFEFEFEF),
-          body: Center(
-            child: CircularProgressIndicator(
-              color: Color(0xFF08DAD6),
-              strokeWidth: 6.0,
+      builder: (context, userDataProvider, child) {
+        if (userDataProvider.userData == null) {
+          return const Scaffold(
+            backgroundColor: Color(0xFFEFEFEF),
+            body: Center(
+              child: CircularProgressIndicator(
+                color: Color(0xFF08DAD6),
+                strokeWidth: 6.0,
+              ),
             ),
-          ),
-        );
-      }
-      return MaterialApp(
-        theme: ThemeData(
-          textTheme: GoogleFonts.exo2TextTheme(
-            Theme.of(context).textTheme,
-          ),
-          primaryTextTheme: GoogleFonts.exoTextTheme(
-            Theme.of(context).primaryTextTheme,
-          ),
-        ),
-        home: PopScope(
+          );
+        }
+
+        return PopScope(
           canPop: false,
           onPopInvoked: (didPop) {
             try {
@@ -254,7 +275,6 @@ class FitnessState extends State<FitnessMode> {
               toolbarHeight: 64,
               centerTitle: true,
               title: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   GestureDetector(
                     onTap: () => _showUserProfile(userDataProvider),
@@ -277,7 +297,6 @@ class FitnessState extends State<FitnessMode> {
                   const SizedBox(width: 14),
                   Expanded(
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           userDataProvider.userData!['username'],
@@ -286,15 +305,95 @@ class FitnessState extends State<FitnessMode> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const SizedBox(height: 6),
-                        Text(
-                          textAlign: TextAlign.center,
-                          "TOTAL STEPS: ${NumberFormat('#,###').format(int.parse('1'))}",
-                          style: const TextStyle(
-                            fontSize: 12,
+                        const Text(
+                          "Fitness Mode",
+                          style: TextStyle(
+                            fontSize: 14,
                           ),
                         ),
                       ],
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                Stack(
+                  children: [
+                    IconButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                const AnnouncementPage(previousPage: Fitness()),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.notifications_active_outlined),
+                    ),
+                    if (userDataProvider.unreadAnnouncements != '0')
+                      Positioned(
+                        right: 0,
+                        top: 0,
+                        child: Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          constraints: const BoxConstraints(
+                            minWidth: 16,
+                            minHeight: 16,
+                          ),
+                          child: Text(
+                            userDataProvider.unreadAnnouncements,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+            bottomNavigationBar: Container(
+              padding: const EdgeInsets.symmetric(vertical: 10.0),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEFEFE),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.3),
+                    spreadRadius: 1,
+                    blurRadius: 2,
+                    offset: const Offset(0, -1),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: <Widget>[
+                  GestureDetector(
+                    onTap: () {},
+                    child: const Icon(
+                      Icons.emoji_events_outlined,
+                      size: 30,
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () {},
+                    child: const Icon(
+                      Icons.directions_walk_outlined,
+                      size: 30,
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () {},
+                    child: const Icon(
+                      Icons.perm_identity_outlined,
+                      size: 30,
                     ),
                   ),
                 ],
@@ -306,127 +405,195 @@ class FitnessState extends State<FitnessMode> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Column(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(14),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFFEFEFE),
+                    Container(
+                      width: double.infinity,
+                      height: 200,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEFEFE),
+                        borderRadius: BorderRadius.circular(4),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0xFFD4D4D4),
+                            blurRadius: 2,
+                            blurStyle: BlurStyle.outer,
+                          )
+                        ],
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            NumberFormat("#,###").format(int.parse('1000')),
+                            style: const TextStyle(
+                              fontSize: 42,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const Text(
+                            'TOTAL STEPS',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEFEFE),
+                        borderRadius: BorderRadius.circular(4),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0xFFD4D4D4),
+                            blurRadius: 2,
+                            blurStyle: BlurStyle.outer,
+                          )
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          const Text(
+                            "CHOOSE EXERCISE",
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          ElevatedButton(
+                            onPressed: () {
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const WalkingCounterFitness(),
+                                ),
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF08DAD6),
+                              shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(4),
-                                boxShadow: const [
-                                  BoxShadow(
-                                    color: Color(0xFFD4D4D4),
-                                    blurRadius: 2,
-                                    blurStyle: BlurStyle.outer,
-                                  )
-                                ],
                               ),
+                            ),
+                            child: Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(14),
                               child: Column(
                                 children: [
-                                  Text(
-                                    NumberFormat('#,###').format(
-                                      int.parse('1'),
-                                    ),
-                                    style: const TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black,
-                                    ),
+                                  Image.asset(
+                                    "assets/images/walking.png",
+                                    height: 48,
+                                    width: 48,
                                   ),
                                   const SizedBox(height: 4),
-                                  const Text("Total Walking Steps"),
+                                  const Text(
+                                    "WALKING",
+                                    style: TextStyle(
+                                      color: Colors.black,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 20,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
-                            const SizedBox(height: 8),
-                            Container(
-                              padding: const EdgeInsets.all(14),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFFEFEFE),
+                          ),
+                          const SizedBox(height: 14),
+                          ElevatedButton(
+                            onPressed: () {
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const JoggingCounterFitness(),
+                                ),
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF08DAD6),
+                              shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(4),
-                                boxShadow: const [
-                                  BoxShadow(
-                                    color: Color(0xFFD4D4D4),
-                                    blurRadius: 2,
-                                    blurStyle: BlurStyle.outer,
-                                  )
-                                ],
                               ),
+                            ),
+                            child: Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(14),
                               child: Column(
                                 children: [
-                                  Text(
-                                    NumberFormat('#,###').format(
-                                      int.parse('1'),
-                                    ),
-                                    style: const TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black,
-                                    ),
+                                  Image.asset(
+                                    "assets/images/jogging.png",
+                                    height: 48,
+                                    width: 48,
                                   ),
                                   const SizedBox(height: 4),
-                                  const Text("Total Jogging Steps"),
+                                  const Text(
+                                    "JOGGING",
+                                    style: TextStyle(
+                                      color: Colors.black,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 20,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
-                            const SizedBox(height: 8),
-                            Container(
-                              padding: const EdgeInsets.all(14),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFFEFEFE),
+                          ),
+                          const SizedBox(height: 14),
+                          ElevatedButton(
+                            onPressed: () {
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const RunningCounterFitness(),
+                                ),
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF08DAD6),
+                              shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(4),
-                                boxShadow: const [
-                                  BoxShadow(
-                                    color: Color(0xFFD4D4D4),
-                                    blurRadius: 2,
-                                    blurStyle: BlurStyle.outer,
-                                  )
-                                ],
                               ),
+                            ),
+                            child: Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(14),
                               child: Column(
                                 children: [
-                                  Text(
-                                    NumberFormat('#,###').format(
-                                      int.parse('1'),
-                                    ),
-                                    style: const TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black,
-                                    ),
+                                  Image.asset(
+                                    "assets/images/running.png",
+                                    height: 48,
+                                    width: 48,
                                   ),
                                   const SizedBox(height: 4),
-                                  const Text("Total Running Steps"),
+                                  const Text(
+                                    "RUNNING",
+                                    style: TextStyle(
+                                      color: Colors.black,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 20,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
-                          ],
-                        ),
-                        Column(
-                          children: [
-                            ElevatedButton(
-                              onPressed: () {},
-                              child: Text("BUTTON"),
-                            ),
-                            ElevatedButton(
-                              onPressed: () {},
-                              child: Text("BUTTON"),
-                            ),
-                          ],
-                        )
-                      ],
-                    )
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
             ),
           ),
-        ),
-      );
-    });
+        );
+      },
+    );
   }
 }

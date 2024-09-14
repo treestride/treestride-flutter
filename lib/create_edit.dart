@@ -58,7 +58,7 @@ class CreateEditPostPageState extends State<CreateEditPostPage> {
     img.Image watermark = img.Image(
       width: 250,
       height: 24,
-      backgroundColor: img.ColorUint8.rgba(0, 0, 0, 0),
+      backgroundColor: img.ColorFloat16.rgba(255, 255, 255, 0.2),
     );
 
     // Draw the text onto the transparent image

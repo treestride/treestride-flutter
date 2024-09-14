@@ -8,7 +8,6 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'home.dart';
 import 'offline.dart';
 import 'user_data_provider.dart';
 
@@ -60,7 +59,8 @@ class Announcement {
 }
 
 class AnnouncementPage extends StatefulWidget {
-  const AnnouncementPage({super.key});
+  final Widget previousPage;
+  const AnnouncementPage({super.key, required this.previousPage});
 
   @override
   AnnouncementPageState createState() => AnnouncementPageState();
@@ -151,7 +151,7 @@ class AnnouncementPageState extends State<AnnouncementPage> {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (context) => const Home(),
+              builder: (context) => widget.previousPage,
             ),
           );
         },
@@ -166,7 +166,7 @@ class AnnouncementPageState extends State<AnnouncementPage> {
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const Home(),
+                    builder: (context) => widget.previousPage,
                   ),
                 );
               },
