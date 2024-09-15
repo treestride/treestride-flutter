@@ -626,6 +626,7 @@ class HomePageState extends State<HomePage> {
                   const SizedBox(width: 14),
                   Expanded(
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           userDataProvider.userData!['username'],

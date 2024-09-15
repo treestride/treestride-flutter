@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:image/image.dart' as img;
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_picker/image_picker.dart';
@@ -37,60 +37,63 @@ class CreateEditPostPageState extends State<CreateEditPostPage> {
   Future<void> _pickImage(ImageSource source) async {
     final pickedFile = await _imagePicker.pickImage(source: source);
     if (pickedFile != null) {
-      File imageFile = File(pickedFile.path);
-      File watermarkedImage = await _addWatermark(imageFile, widget.username);
+      final watermarkedImage = await _addWatermark(File(pickedFile.path));
       setState(() {
         _image = watermarkedImage;
       });
     }
   }
 
-  Future<File> _addWatermark(File imageFile, String username) async {
-    // Read the image file
-    img.Image? image = img.decodeImage(await imageFile.readAsBytes());
+  Future<File> _addWatermark(File image) async {
+    final ui.Image originalImage = await _loadImage(image);
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder);
 
-    if (image == null) return imageFile;
+    canvas.drawImage(originalImage, Offset.zero, Paint());
 
-    // Prepare the watermark text
-    String watermarkText = 'treestride/@$username';
-
-    // Create a new transparent image for the watermark
-    img.Image watermark = img.Image(
-      width: 250,
-      height: 24,
-      backgroundColor: img.ColorFloat16.rgba(255, 255, 255, 0.2),
+    final textPainter = TextPainter(
+      text: TextSpan(
+        text: 'TreeStride/${widget.username}',
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 24,
+          fontWeight: FontWeight.bold,
+          shadows: [
+            Shadow(
+              blurRadius: 2,
+              color: Colors.black,
+              offset: Offset(1, 1),
+            ),
+          ],
+        ),
+      ),
+      textDirection: TextDirection.ltr,
     );
+    textPainter.layout();
 
-    // Draw the text onto the transparent image
-    img.drawString(
-      watermark,
-      watermarkText,
-      font: img.arial24,
-      color: img.ColorRgba8(255, 255, 255, 200),
+    final position = Offset(
+      (originalImage.width - textPainter.width) / 2,
+      originalImage.height - textPainter.height - 10,
     );
+    textPainter.paint(canvas, position);
 
-    // Calculate position (bottom-right corner)
-    int x = image.width - watermark.width - 10;
-    int y = image.height - watermark.height - 10;
+    final picture = recorder.endRecording();
+    final img =
+        await picture.toImage(originalImage.width, originalImage.height);
+    final pngBytes = await img.toByteData(format: ui.ImageByteFormat.png);
 
-    // Composite the watermark onto the main image
-    img.compositeImage(
-      image,
-      watermark,
-      dstX: x,
-      dstY: y,
-      blend: img.BlendMode.overlay,
-    );
-
-    // Get temporary directory
     final tempDir = await getTemporaryDirectory();
-    final tempPath = tempDir.path;
-    final watermarkedFile = File('$tempPath/watermarked_image.png');
+    final tempFile = File('${tempDir.path}/watermarked_image.png');
+    await tempFile.writeAsBytes(pngBytes!.buffer.asUint8List());
 
-    // Save the watermarked image
-    await watermarkedFile.writeAsBytes(img.encodePng(image));
+    return tempFile;
+  }
 
-    return watermarkedFile;
+  Future<ui.Image> _loadImage(File file) async {
+    final bytes = await file.readAsBytes();
+    final codec = await ui.instantiateImageCodec(bytes);
+    final frameInfo = await codec.getNextFrame();
+    return frameInfo.image;
   }
 
   void _showImageSourceDialog() {
@@ -220,7 +223,7 @@ class CreateEditPostPageState extends State<CreateEditPostPage> {
                         maxLines: 6,
                         cursorColor: const Color(0xFF08DAD6),
                         decoration: InputDecoration(
-                          hintText: 'What\'s on your mind?',
+                          hintText: 'Post an update about your tree',
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(14),
                             borderSide: BorderSide.none,
@@ -229,9 +232,10 @@ class CreateEditPostPageState extends State<CreateEditPostPage> {
                           fillColor: Colors.grey[200],
                         ),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 14),
                       if (_image != null)
                         Column(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             ClipRRect(
                               borderRadius: BorderRadius.circular(4),
@@ -240,7 +244,6 @@ class CreateEditPostPageState extends State<CreateEditPostPage> {
                                 children: [
                                   Image.file(
                                     _image!,
-                                    height: 250,
                                     width: double.infinity,
                                     fit: BoxFit.cover,
                                   ),
@@ -262,25 +265,28 @@ class CreateEditPostPageState extends State<CreateEditPostPage> {
                                 ],
                               ),
                             ),
-                            const SizedBox(height: 24)
+                            const SizedBox(height: 14)
                           ],
                         )
                       else if (widget.initialImageUrl != null)
                         Column(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             ClipRRect(
                               borderRadius: BorderRadius.circular(4),
                               child: Image.network(
                                 widget.initialImageUrl!,
-                                height: 250,
                                 width: double.infinity,
                                 fit: BoxFit.cover,
                               ),
                             ),
-                            const SizedBox(height: 24)
+                            const SizedBox(height: 14)
                           ],
                         ),
-                      ElevatedButton(
+                      const SizedBox(height: 14),
+                      ElevatedButton.icon(
+                        icon: const Icon(Icons.check),
+                        label: const Text('Post'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF08DAD6),
                           foregroundColor: Colors.white,
@@ -306,14 +312,7 @@ class CreateEditPostPageState extends State<CreateEditPostPage> {
                             );
                           }
                         },
-                        child: const Text(
-                          "Confirm Post",
-                          style: TextStyle(
-                            fontSize: 16,
-                          ),
-                        ),
                       ),
-                      const SizedBox(height: 24),
                     ],
                   ),
                 ),

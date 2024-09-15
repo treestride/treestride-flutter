@@ -249,13 +249,15 @@ class PlantedTreesState extends State<PlantedTrees> {
 
   Widget _buildTreeCard(Map<String, dynamic> request) {
     return Card(
+      color: const Color(0xFFFEFEFE),
       margin: const EdgeInsets.only(bottom: 24),
       elevation: 2,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(4),
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           ClipRRect(
             borderRadius: const BorderRadius.only(
@@ -266,6 +268,7 @@ class PlantedTreesState extends State<PlantedTrees> {
               request['treeImage'] ?? '',
               fit: BoxFit.cover,
               width: 120,
+              height: 180,
             ),
           ),
           Expanded(

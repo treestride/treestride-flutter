@@ -667,7 +667,7 @@ class ProfileState extends State<Profile> {
               backgroundColor: const Color(0xFF08DAD6),
               padding: const EdgeInsets.symmetric(
                 horizontal: 24,
-                vertical: 14,
+                vertical: 8,
               ),
             ),
             icon: const Icon(
@@ -748,14 +748,12 @@ class ProfileState extends State<Profile> {
         children: [
           Icon(icon, size: 32, color: const Color(0xFF08DAD6)),
           const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              title,
-              textAlign: TextAlign.left,
-              style: const TextStyle(
-                fontSize: 14,
-                color: Colors.grey,
-              ),
+          Text(
+            title,
+            textAlign: TextAlign.left,
+            style: const TextStyle(
+              fontSize: 14,
+              color: Colors.grey,
             ),
           ),
           const SizedBox(width: 8),
