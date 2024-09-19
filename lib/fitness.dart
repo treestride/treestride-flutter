@@ -1,3 +1,6 @@
+// ignore_for_file: unrelated_type_equality_checks
+
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -5,11 +8,15 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'announcements.dart';
+import 'assessment.dart';
 import 'home.dart';
 import 'jogging_fitness.dart';
 import 'login.dart';
+import 'offline.dart';
+import 'profile_fitness.dart';
 import 'running_fitness.dart';
 import 'user_data_provider.dart';
 import 'walking_fitness.dart';
@@ -47,26 +54,54 @@ class FitnessMode extends StatefulWidget {
 
 class FitnessState extends State<FitnessMode> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  late SharedPreferences _prefs;
+  int _totalSteps = 0;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _initializeApp();
-    });
+    _initializeApp();
+  }
+
+  Future<bool> _checkConnection() async {
+    var connectivityResult = await (Connectivity().checkConnectivity());
+    if (connectivityResult == ConnectivityResult.none) {
+      // No internet connection, navigate to Offline page
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const Offline()),
+        );
+      }
+      return false;
+    }
+    return true;
+  }
+
+  void _navigateWithConnectivityCheck(Widget destination) async {
+    if (await _checkConnection()) {
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => destination),
+        );
+      }
+    }
   }
 
   Future<void> _initializeApp() async {
-    final provider = Provider.of<UserDataProvider>(context, listen: false);
     try {
-      await provider.fetchUserData();
+      _prefs = await SharedPreferences.getInstance();
+      _totalSteps = _prefs.getInt('totalSteps') ?? 0;
+      setState(() {});
     } catch (error) {
       _showErrorToast("Initialization error: $error");
-      Future.delayed(Duration.zero, () {
+      if (mounted) {
+        _auth.signOut();
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const Login()),
         );
-      });
+      }
     }
   }
 
@@ -83,7 +118,7 @@ class FitnessState extends State<FitnessMode> {
               children: [
                 CircleAvatar(
                   radius: 64,
-                  backgroundColor: const Color(0xFF08DAD6),
+                  backgroundColor: Colors.black12,
                   child: CircleAvatar(
                     radius: 62,
                     backgroundImage: NetworkImage(
@@ -151,11 +186,8 @@ class FitnessState extends State<FitnessMode> {
                   ),
                   onPressed: () {
                     Navigator.of(context).pop();
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const Home(),
-                      ),
+                    _navigateWithConnectivityCheck(
+                      const Home(),
                     );
                   },
                   child: const Row(
@@ -280,7 +312,7 @@ class FitnessState extends State<FitnessMode> {
                     onTap: () => _showUserProfile(userDataProvider),
                     child: CircleAvatar(
                       radius: 24,
-                      backgroundColor: const Color(0xFF08DAD6),
+                      backgroundColor: Colors.black12,
                       child: CircleAvatar(
                         radius: 22,
                         backgroundImage: NetworkImage(
@@ -322,11 +354,9 @@ class FitnessState extends State<FitnessMode> {
                   children: [
                     IconButton(
                       onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                const AnnouncementPage(previousPage: Fitness()),
+                        _navigateWithConnectivityCheck(
+                          const AnnouncementPage(
+                            previousPage: Fitness(),
                           ),
                         );
                       },
@@ -377,9 +407,16 @@ class FitnessState extends State<FitnessMode> {
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: <Widget>[
                   GestureDetector(
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const Assessment(),
+                        ),
+                      );
+                    },
                     child: const Icon(
-                      Icons.emoji_events_outlined,
+                      Icons.assessment_outlined,
                       size: 30,
                     ),
                   ),
@@ -391,7 +428,14 @@ class FitnessState extends State<FitnessMode> {
                     ),
                   ),
                   GestureDetector(
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ProfileFitness(),
+                        ),
+                      );
+                    },
                     child: const Icon(
                       Icons.perm_identity_outlined,
                       size: 30,
@@ -425,10 +469,11 @@ class FitnessState extends State<FitnessMode> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            NumberFormat("#,###").format(int.parse('1000')),
+                            NumberFormat("#,###").format(_totalSteps),
                             style: const TextStyle(
                               fontSize: 42,
                               fontWeight: FontWeight.bold,
+                              color: Color(0xFF08DAD6),
                             ),
                           ),
                           const Text(

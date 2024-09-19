@@ -254,7 +254,7 @@ class UserFeedPageState extends State<UserFeedPage>
                 children: [
                   CircleAvatar(
                     radius: 24,
-                    backgroundColor: const Color(0xFF08DAD6),
+                    backgroundColor: Colors.black12,
                     child: CircleAvatar(
                       radius: 22,
                       backgroundImage: CachedNetworkImageProvider(

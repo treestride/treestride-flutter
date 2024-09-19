@@ -9,7 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'dart:async';
 import 'dart:math';
-import 'home.dart';
+import 'fitness.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -49,6 +49,7 @@ class JoggingCounterHomeStateFitness extends State<JoggingCounterHomeFitness>
   final double _sensitivity = 6;
   double _lastMagnitude = 0;
   int _joggingSteps = 0;
+  int _totalSteps = 0;
   DateTime? _selectedDate;
   DateTime _currentDate = DateTime.now();
   DateTime _lastStepTime = DateTime.now();
@@ -96,6 +97,7 @@ class JoggingCounterHomeStateFitness extends State<JoggingCounterHomeFitness>
   void _loadDataFromLocalStorage() {
     setState(() {
       _joggingSteps = _prefs.getInt('joggingSteps') ?? 0;
+      _totalSteps = _prefs.getInt('totalSteps') ?? 0;
       _isJoggingGoalActive = _prefs.getBool('isJoggingGoalActive') ?? false;
       _joggingGoal = _prefs.getString('joggingGoal') ?? '0';
       _joggingGoalEndDate = _prefs.getString('joggingGoalEndDate') ?? '';
@@ -107,6 +109,7 @@ class JoggingCounterHomeStateFitness extends State<JoggingCounterHomeFitness>
     await _prefs.setBool('isJoggingGoalActive', _isJoggingGoalActive);
     await _prefs.setString('joggingGoal', _joggingGoal);
     await _prefs.setString('joggingGoalEndDate', _joggingGoalEndDate);
+    await _prefs.setInt('totalSteps', _totalSteps);
   }
 
   void _selectDate(BuildContext context) async {
@@ -180,8 +183,9 @@ class JoggingCounterHomeStateFitness extends State<JoggingCounterHomeFitness>
         magnitude - _lastMagnitude > 1.4) {
       setState(() {
         _joggingSteps++;
+        _totalSteps++;
       });
-      _updateJoggingSteps(_joggingSteps);
+      _updateJoggingSteps(_joggingSteps, _totalSteps);
       _lastStepTime = currentTime;
 
       // Check goal completion after each step
@@ -197,8 +201,9 @@ class JoggingCounterHomeStateFitness extends State<JoggingCounterHomeFitness>
     _lastMagnitude = magnitude;
   }
 
-  Future<void> _updateJoggingSteps(int newStepCount) async {
+  Future<void> _updateJoggingSteps(int newStepCount, int totalStepCount) async {
     await _prefs.setInt('joggingSteps', newStepCount);
+    await _prefs.setInt('totalSteps', totalStepCount);
   }
 
   Future<void> _checkGoalCompletion() async {
@@ -210,8 +215,11 @@ class JoggingCounterHomeStateFitness extends State<JoggingCounterHomeFitness>
       if (currentSteps >= goalSteps || DateTime.now().isAfter(endDate)) {
         setState(() {
           _isJoggingGoalActive = false;
+          _joggingSteps = 0;
+          _joggingGoal = '0';
+          _joggingGoalEndDate = '';
         });
-        await _prefs.setBool('isJoggingGoalActive', false);
+        _saveDataToLocalStorage();
         _showToast("Congratulations! You've completed your jogging goal!");
       }
     }
@@ -295,7 +303,7 @@ class JoggingCounterHomeStateFitness extends State<JoggingCounterHomeFitness>
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (context) => const Home(),
+              builder: (context) => const Fitness(),
             ),
           );
         },
@@ -311,7 +319,7 @@ class JoggingCounterHomeStateFitness extends State<JoggingCounterHomeFitness>
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const Home(),
+                    builder: (context) => const Fitness(),
                   ),
                 );
               },

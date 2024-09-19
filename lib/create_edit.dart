@@ -1,7 +1,9 @@
 import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -27,6 +29,7 @@ class CreateEditPostPageState extends State<CreateEditPostPage> {
   late TextEditingController _textController;
   File? _image;
   final ImagePicker _imagePicker = ImagePicker();
+  bool _isProcessingImage = false;
 
   @override
   void initState() {
@@ -37,11 +40,31 @@ class CreateEditPostPageState extends State<CreateEditPostPage> {
   Future<void> _pickImage(ImageSource source) async {
     final pickedFile = await _imagePicker.pickImage(source: source);
     if (pickedFile != null) {
-      final watermarkedImage = await _addWatermark(File(pickedFile.path));
+      setState(() {
+        _isProcessingImage = true;
+      });
+      final compressedImage = await compressImage(File(pickedFile.path));
+      final watermarkedImage = await _addWatermark(compressedImage);
       setState(() {
         _image = watermarkedImage;
+        _isProcessingImage = false;
       });
     }
+  }
+
+  Future<File> compressImage(File file) async {
+    final dir = await getTemporaryDirectory();
+    final targetPath = '${dir.absolute.path}/temp_compressed.jpg';
+
+    var result = await FlutterImageCompress.compressAndGetFile(
+      file.absolute.path,
+      targetPath,
+      quality: 88,
+      minWidth: 1024,
+      minHeight: 1024,
+    );
+
+    return File(result!.path);
   }
 
   Future<File> _addWatermark(File image) async {
@@ -51,14 +74,22 @@ class CreateEditPostPageState extends State<CreateEditPostPage> {
 
     canvas.drawImage(originalImage, Offset.zero, Paint());
 
+    final watermarkText = 'treestride/${widget.username}';
+    final imageWidth = originalImage.width.toDouble();
+    final imageHeight = originalImage.height.toDouble();
+
+    // Calculate font size based on image dimensions
+    final baseFontSize = (imageWidth + imageHeight) / 100;
+    final fontSize = baseFontSize.clamp(16.0, 48.0); // Min 16, Max 48
+
     final textPainter = TextPainter(
       text: TextSpan(
-        text: 'TreeStride/${widget.username}',
-        style: const TextStyle(
+        text: watermarkText,
+        style: GoogleFonts.exo2(
           color: Colors.white,
-          fontSize: 24,
+          fontSize: fontSize,
           fontWeight: FontWeight.bold,
-          shadows: [
+          shadows: const [
             Shadow(
               blurRadius: 2,
               color: Colors.black,
@@ -72,14 +103,14 @@ class CreateEditPostPageState extends State<CreateEditPostPage> {
     textPainter.layout();
 
     final position = Offset(
-      (originalImage.width - textPainter.width) / 2,
-      originalImage.height - textPainter.height - 10,
+      (imageWidth - textPainter.width) / 2,
+      // 5% padding from bottom
+      imageHeight - textPainter.height - (imageHeight * 0.05),
     );
     textPainter.paint(canvas, position);
 
     final picture = recorder.endRecording();
-    final img =
-        await picture.toImage(originalImage.width, originalImage.height);
+    final img = await picture.toImage(imageWidth.toInt(), imageHeight.toInt());
     final pngBytes = await img.toByteData(format: ui.ImageByteFormat.png);
 
     final tempDir = await getTemporaryDirectory();
@@ -214,7 +245,7 @@ class CreateEditPostPageState extends State<CreateEditPostPage> {
                   ],
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.only(top: 24, left: 24, right: 24),
+                  padding: const EdgeInsets.all(14),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -223,9 +254,9 @@ class CreateEditPostPageState extends State<CreateEditPostPage> {
                         maxLines: 6,
                         cursorColor: const Color(0xFF08DAD6),
                         decoration: InputDecoration(
-                          hintText: 'Post an update about your tree',
+                          hintText: 'Have an update?',
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
+                            borderRadius: BorderRadius.circular(4),
                             borderSide: BorderSide.none,
                           ),
                           filled: true,
@@ -233,10 +264,56 @@ class CreateEditPostPageState extends State<CreateEditPostPage> {
                         ),
                       ),
                       const SizedBox(height: 14),
-                      if (_image != null)
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF08DAD6),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.all(4),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                        onPressed: () {
+                          if (_textController.text.trim().isNotEmpty ||
+                              _image != null) {
+                            widget.onSave(_textController.text.trim(), _image,
+                                widget.username);
+                            Navigator.pop(context);
+                          } else {
+                            // Show an error message
+                            Fluttertoast.showToast(
+                              msg: "Post is Blank!",
+                              toastLength: Toast.LENGTH_SHORT,
+                              gravity: ToastGravity.BOTTOM,
+                              backgroundColor: Colors.black,
+                              textColor: Colors.white,
+                            );
+                          }
+                        },
+                        child: const Text(
+                          'Confirm Post',
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                      if (_isProcessingImage)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 14.0),
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              color: Color(0xFF08DAD6),
+                              strokeWidth: 6,
+                            ),
+                          ),
+                        )
+                      else if (_image != null)
                         Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
+                            const SizedBox(height: 14),
                             ClipRRect(
                               borderRadius: BorderRadius.circular(4),
                               child: Stack(
@@ -265,13 +342,13 @@ class CreateEditPostPageState extends State<CreateEditPostPage> {
                                 ],
                               ),
                             ),
-                            const SizedBox(height: 14)
                           ],
                         )
                       else if (widget.initialImageUrl != null)
                         Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
+                            const SizedBox(height: 14),
                             ClipRRect(
                               borderRadius: BorderRadius.circular(4),
                               child: Image.network(
@@ -280,39 +357,8 @@ class CreateEditPostPageState extends State<CreateEditPostPage> {
                                 fit: BoxFit.cover,
                               ),
                             ),
-                            const SizedBox(height: 14)
                           ],
                         ),
-                      const SizedBox(height: 14),
-                      ElevatedButton.icon(
-                        icon: const Icon(Icons.check),
-                        label: const Text('Post'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF08DAD6),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.all(4),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                        ),
-                        onPressed: () {
-                          if (_textController.text.trim().isNotEmpty ||
-                              _image != null) {
-                            widget.onSave(_textController.text.trim(), _image,
-                                widget.username);
-                            Navigator.pop(context);
-                          } else {
-                            // Show an error message
-                            Fluttertoast.showToast(
-                              msg: "Post is Blank!",
-                              toastLength: Toast.LENGTH_SHORT,
-                              gravity: ToastGravity.BOTTOM,
-                              backgroundColor: Colors.black,
-                              textColor: Colors.white,
-                            );
-                          }
-                        },
-                      ),
                     ],
                   ),
                 ),

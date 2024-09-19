@@ -615,7 +615,7 @@ class ProfileState extends State<Profile> {
         children: [
           CircleAvatar(
             radius: 64,
-            backgroundColor: const Color(0xFF08DAD6),
+            backgroundColor: Colors.black12,
             child: CircleAvatar(
               radius: 62,
               backgroundImage: NetworkImage(
@@ -757,11 +757,14 @@ class ProfileState extends State<Profile> {
             ),
           ),
           const SizedBox(width: 8),
-          Text(
-            _formatNumber(value),
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
+          Expanded(
+            child: Text(
+              textAlign: TextAlign.left,
+              _formatNumber(value),
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
           Icon(arrow, size: 32, color: const Color(0xFF08DAD6)),

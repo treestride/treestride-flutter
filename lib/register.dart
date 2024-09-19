@@ -49,9 +49,12 @@ class RegisterPageState extends State<Register> {
   }
 
   Future<bool> _isUsernameUnique(String username) async {
+    // Convert the username to lowercase for case-insensitive comparison
+    String lowercaseUsername = username.toLowerCase();
+
     final QuerySnapshot result = await _firestore
         .collection('users')
-        .where('username', isEqualTo: username)
+        .where('lowercaseUsername', isEqualTo: lowercaseUsername)
         .limit(1)
         .get();
     return result.docs.isEmpty;
@@ -173,6 +176,7 @@ class RegisterPageState extends State<Register> {
           {
             'photoURL': photoURL,
             'username': _username,
+            'lowercaseUsername': _username.toLowerCase(),
             'email': _email,
             'password': hashedPassword,
             'phoneNumber': _phoneNumber,

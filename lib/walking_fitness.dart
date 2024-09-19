@@ -9,7 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'dart:async';
 import 'dart:math';
-import 'home.dart';
+import 'fitness.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -39,7 +39,8 @@ class WalkingCounterHomeFitness extends StatefulWidget {
   const WalkingCounterHomeFitness({super.key});
 
   @override
-  WalkingCounterHomeStateFitness createState() => WalkingCounterHomeStateFitness();
+  WalkingCounterHomeStateFitness createState() =>
+      WalkingCounterHomeStateFitness();
 }
 
 class WalkingCounterHomeStateFitness extends State<WalkingCounterHomeFitness>
@@ -48,6 +49,7 @@ class WalkingCounterHomeStateFitness extends State<WalkingCounterHomeFitness>
   final double _sensitivity = 6;
   double _lastMagnitude = 0;
   int _walkingSteps = 0;
+  int _totalSteps = 0;
   DateTime? _selectedDate;
   DateTime _currentDate = DateTime.now();
   DateTime _lastStepTime = DateTime.now();
@@ -95,6 +97,7 @@ class WalkingCounterHomeStateFitness extends State<WalkingCounterHomeFitness>
   void _loadDataFromLocalStorage() {
     setState(() {
       _walkingSteps = _prefs.getInt('walkingSteps') ?? 0;
+      _totalSteps = _prefs.getInt('totalSteps') ?? 0;
       _isWalkingGoalActive = _prefs.getBool('isWalkingGoalActive') ?? false;
       _walkingGoal = _prefs.getString('walkingGoal') ?? '0';
       _walkingGoalEndDate = _prefs.getString('walkingGoalEndDate') ?? '';
@@ -106,6 +109,7 @@ class WalkingCounterHomeStateFitness extends State<WalkingCounterHomeFitness>
     await _prefs.setBool('isWalkingGoalActive', _isWalkingGoalActive);
     await _prefs.setString('walkingGoal', _walkingGoal);
     await _prefs.setString('walkingGoalEndDate', _walkingGoalEndDate);
+    await _prefs.setInt('totalSteps', _totalSteps);
   }
 
   void _selectDate(BuildContext context) async {
@@ -179,8 +183,9 @@ class WalkingCounterHomeStateFitness extends State<WalkingCounterHomeFitness>
         magnitude - _lastMagnitude > 1.4) {
       setState(() {
         _walkingSteps++;
+        _totalSteps++;
       });
-      _updateWalkingSteps(_walkingSteps);
+      _updateWalkingSteps(_walkingSteps, _totalSteps);
       _lastStepTime = currentTime;
 
       // Check goal completion after each step
@@ -196,8 +201,9 @@ class WalkingCounterHomeStateFitness extends State<WalkingCounterHomeFitness>
     _lastMagnitude = magnitude;
   }
 
-  Future<void> _updateWalkingSteps(int newStepCount) async {
+  Future<void> _updateWalkingSteps(int newStepCount, int totalStepCount) async {
     await _prefs.setInt('walkingSteps', newStepCount);
+    await _prefs.setInt('totalSteps', totalStepCount);
   }
 
   Future<void> _checkGoalCompletion() async {
@@ -209,8 +215,11 @@ class WalkingCounterHomeStateFitness extends State<WalkingCounterHomeFitness>
       if (currentSteps >= goalSteps || DateTime.now().isAfter(endDate)) {
         setState(() {
           _isWalkingGoalActive = false;
+          _walkingSteps = 0;
+          _walkingGoal = '0';
+          _walkingGoalEndDate = '';
         });
-        await _prefs.setBool('isWalkingGoalActive', false);
+        _saveDataToLocalStorage();
         _showToast("Congratulations! You've completed your walking goal!");
       }
     }
@@ -294,7 +303,7 @@ class WalkingCounterHomeStateFitness extends State<WalkingCounterHomeFitness>
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (context) => const Home(),
+              builder: (context) => const Fitness(),
             ),
           );
         },
@@ -310,7 +319,7 @@ class WalkingCounterHomeStateFitness extends State<WalkingCounterHomeFitness>
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const Home(),
+                    builder: (context) => const Fitness(),
                   ),
                 );
               },

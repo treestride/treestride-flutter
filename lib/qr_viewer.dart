@@ -267,7 +267,7 @@ class UserDataDisplay extends StatelessWidget {
                     children: [
                       CircleAvatar(
                         radius: 64,
-                        backgroundColor: const Color(0xFF08DAD6),
+                        backgroundColor: Colors.black12,
                         child: CircleAvatar(
                           backgroundColor: Colors.transparent,
                           radius: 62,

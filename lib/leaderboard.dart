@@ -388,7 +388,7 @@ class LeaderboardListState extends State<LeaderboardList> {
             children: [
               CircleAvatar(
                 radius: avatarSize / 1.85,
-                backgroundColor: const Color(0xFF08DAD6),
+                backgroundColor: Colors.black12,
                 child: CircleAvatar(
                   onBackgroundImageError: (error, stackTrace) => Icon(
                     Icons.image,
@@ -453,7 +453,7 @@ class LeaderboardListState extends State<LeaderboardList> {
           ),
           leading: CircleAvatar(
             radius: 24,
-            backgroundColor: const Color(0xFF08DAD6),
+            backgroundColor: Colors.black12,
             child: CircleAvatar(
               radius: 22,
               backgroundImage: NetworkImage(user['photoURL']),

@@ -87,6 +87,7 @@ class HomePageState extends State<HomePage> {
     } catch (error) {
       _showErrorToast("Initialization error: $error");
       Future.delayed(Duration.zero, () {
+        _auth.signOut();
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const Login()),
         );
@@ -119,7 +120,7 @@ class HomePageState extends State<HomePage> {
               children: [
                 CircleAvatar(
                   radius: 64,
-                  backgroundColor: const Color(0xFF08DAD6),
+                  backgroundColor: Colors.black12,
                   child: CircleAvatar(
                     radius: 62,
                     backgroundImage: NetworkImage(
@@ -609,7 +610,7 @@ class HomePageState extends State<HomePage> {
                     onTap: () => _showUserProfile(userDataProvider),
                     child: CircleAvatar(
                       radius: 24,
-                      backgroundColor: const Color(0xFF08DAD6),
+                      backgroundColor: Colors.black12,
                       child: CircleAvatar(
                         radius: 22,
                         backgroundImage: NetworkImage(
