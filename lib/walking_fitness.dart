@@ -50,6 +50,7 @@ class WalkingCounterHomeStateFitness extends State<WalkingCounterHomeFitness>
   double _lastMagnitude = 0;
   int _walkingSteps = 0;
   int _totalSteps = 0;
+  int _totalWalkingSteps = 0;
   DateTime? _selectedDate;
   DateTime _currentDate = DateTime.now();
   DateTime _lastStepTime = DateTime.now();
@@ -98,6 +99,7 @@ class WalkingCounterHomeStateFitness extends State<WalkingCounterHomeFitness>
     setState(() {
       _walkingSteps = _prefs.getInt('walkingSteps') ?? 0;
       _totalSteps = _prefs.getInt('totalSteps') ?? 0;
+      _totalWalkingSteps = _prefs.getInt('totalWalkingSteps') ?? 0;
       _isWalkingGoalActive = _prefs.getBool('isWalkingGoalActive') ?? false;
       _walkingGoal = _prefs.getString('walkingGoal') ?? '0';
       _walkingGoalEndDate = _prefs.getString('walkingGoalEndDate') ?? '';
@@ -110,6 +112,7 @@ class WalkingCounterHomeStateFitness extends State<WalkingCounterHomeFitness>
     await _prefs.setString('walkingGoal', _walkingGoal);
     await _prefs.setString('walkingGoalEndDate', _walkingGoalEndDate);
     await _prefs.setInt('totalSteps', _totalSteps);
+    await _prefs.setInt('totalWalkingSteps', _totalWalkingSteps);
   }
 
   void _selectDate(BuildContext context) async {
@@ -184,8 +187,9 @@ class WalkingCounterHomeStateFitness extends State<WalkingCounterHomeFitness>
       setState(() {
         _walkingSteps++;
         _totalSteps++;
+        _totalWalkingSteps++;
       });
-      _updateWalkingSteps(_walkingSteps, _totalSteps);
+      _updateWalkingSteps(_walkingSteps, _totalSteps, _totalWalkingSteps);
       _lastStepTime = currentTime;
 
       // Check goal completion after each step
@@ -201,9 +205,11 @@ class WalkingCounterHomeStateFitness extends State<WalkingCounterHomeFitness>
     _lastMagnitude = magnitude;
   }
 
-  Future<void> _updateWalkingSteps(int newStepCount, int totalStepCount) async {
+  Future<void> _updateWalkingSteps(
+      int newStepCount, int totalStepCount, int totalWalkingSteps) async {
     await _prefs.setInt('walkingSteps', newStepCount);
     await _prefs.setInt('totalSteps', totalStepCount);
+    await _prefs.setInt('totalWalkingSteps', totalWalkingSteps);
   }
 
   Future<void> _checkGoalCompletion() async {

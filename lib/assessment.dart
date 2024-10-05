@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import 'bmi_calculator.dart';
 import 'fitness.dart';
 import 'profile_fitness.dart';
+import 'assessment_test.dart';
+import 'assessment_result.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,6 +38,23 @@ class AssessmentHome extends StatefulWidget {
 }
 
 class _AssessmentState extends State<AssessmentHome> {
+  bool _showTest = true;
+  List<String> _testAnswers = [];
+
+  void _completeTest(List<String> answers) {
+    setState(() {
+      _testAnswers = answers;
+      _showTest = false;
+    });
+  }
+
+  void _restartTest() {
+    setState(() {
+      _showTest = true;
+      _testAnswers = [];
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
@@ -97,7 +115,7 @@ class _AssessmentState extends State<AssessmentHome> {
               GestureDetector(
                 onTap: () {},
                 child: const Icon(
-                  Icons.assessment_outlined,
+                  Icons.fitness_center_outlined,
                   size: 30,
                 ),
               ),
@@ -125,20 +143,27 @@ class _AssessmentState extends State<AssessmentHome> {
                   );
                 },
                 child: const Icon(
-                  Icons.perm_identity_outlined,
+                  Icons.person,
                   size: 30,
                 ),
               ),
             ],
           ),
         ),
-        body: const Center(
+        body: Center(
           child: SingleChildScrollView(
             child: Padding(
-              padding: EdgeInsets.all(24.0),
+              padding: const EdgeInsets.all(24.0),
               child: Column(
                 children: [
-                  BMICalculator(),
+                  if (_showTest)
+                    AssessmentTest(onComplete: _completeTest)
+                  else
+                    AssessmentResults(
+                      answers: _testAnswers,
+                      onReassess: _restartTest,
+                    ),
+                  const SizedBox(height: 20),
                 ],
               ),
             ),

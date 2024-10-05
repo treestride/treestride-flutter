@@ -416,7 +416,7 @@ class FitnessState extends State<FitnessMode> {
                       );
                     },
                     child: const Icon(
-                      Icons.assessment_outlined,
+                      Icons.fitness_center_outlined,
                       size: 30,
                     ),
                   ),
@@ -437,7 +437,7 @@ class FitnessState extends State<FitnessMode> {
                       );
                     },
                     child: const Icon(
-                      Icons.perm_identity_outlined,
+                      Icons.person,
                       size: 30,
                     ),
                   ),

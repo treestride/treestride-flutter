@@ -351,7 +351,7 @@ class ProfileState extends State<Profile> {
                             );
                           },
                           child: const Icon(
-                            Icons.space_dashboard_outlined,
+                            Icons.view_carousel_outlined,
                             size: 30,
                           ),
                         ),

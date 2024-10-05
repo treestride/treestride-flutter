@@ -104,7 +104,7 @@ class BMICalculatorState extends State<BMICalculator> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Text(
-              'BMI CALCULATOR',
+              'BMI ASSESSMENT',
               style: TextStyle(
                 fontSize: 24,
                 color: Colors.black,
@@ -126,7 +126,7 @@ class BMICalculatorState extends State<BMICalculator> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF08DAD6),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(4),
                 ),
               ),
               child: const Text(
@@ -154,19 +154,19 @@ class BMICalculatorState extends State<BMICalculator> {
       decoration: InputDecoration(
         labelText: label,
         filled: true,
-        floatingLabelStyle: const TextStyle(color: Color(0xFF08DAD6)),
+        floatingLabelStyle: const TextStyle(color: Colors.grey),
         fillColor: const Color(0xFFEFEFEF),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(4),
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFF08DAD6), width: 2),
+          borderRadius: BorderRadius.circular(4),
+          borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFF08DAD6), width: 2),
+          borderRadius: BorderRadius.circular(4),
+          borderSide: BorderSide.none,
         ),
       ),
       keyboardType: TextInputType.number,
@@ -184,7 +184,7 @@ class BMICalculatorState extends State<BMICalculator> {
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
         color: const Color(0xFFEFEFEF),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(4),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
@@ -231,13 +231,7 @@ class BMICalculatorState extends State<BMICalculator> {
       decoration: BoxDecoration(
         color: const Color(0xFFFEFEFE),
         borderRadius: BorderRadius.circular(4),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0xFFD4D4D4),
-            blurRadius: 2,
-            blurStyle: BlurStyle.outer,
-          )
-        ],
+        border: Border.all(color: categoryColor, width: 2),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),

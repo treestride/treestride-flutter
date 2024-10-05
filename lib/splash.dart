@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'home.dart';
+import 'choose_mode.dart';
 import 'login.dart';
 
 class Splash extends StatefulWidget {
@@ -38,7 +38,7 @@ class SplashState extends State<Splash> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => const Home(),
+          builder: (context) => const ChooseMode(),
         ),
       );
     }

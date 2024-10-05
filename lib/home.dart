@@ -64,16 +64,18 @@ class HomePageState extends State<HomePage> {
     });
     _connectivityStream = Connectivity().onConnectivityChanged;
     _checkConnection();
-    _requestPermissions();
+    //_requestPermissions();
   }
 
-  Future<void> _requestPermissions() async {
+  /*
+ Future<void> _requestPermissions() async {
     await [
       Permission.storage,
       Permission.activityRecognition,
       Permission.camera
     ].request();
   }
+  */
 
   Future<void> _initializeApp() async {
     final provider = Provider.of<UserDataProvider>(context, listen: false);
@@ -720,7 +722,7 @@ class HomePageState extends State<HomePage> {
                           );
                         },
                         child: const Icon(
-                          Icons.space_dashboard_outlined,
+                          Icons.view_carousel_outlined,
                           size: 30,
                         ),
                       ),

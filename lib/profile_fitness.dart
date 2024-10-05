@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'assessment.dart';
+import 'bmi_calculator.dart';
 import 'fitness.dart';
 import 'user_data_provider.dart';
 
@@ -141,7 +142,7 @@ class ProfileFitnessHomeState extends State<ProfileFitnessHome>
                       );
                     },
                     child: const Icon(
-                      Icons.assessment_outlined,
+                      Icons.fitness_center_outlined,
                       size: 30,
                     ),
                   ),
@@ -162,7 +163,7 @@ class ProfileFitnessHomeState extends State<ProfileFitnessHome>
                   GestureDetector(
                     onTap: () {},
                     child: const Icon(
-                      Icons.perm_identity_outlined,
+                      Icons.person,
                       size: 30,
                     ),
                   ),
@@ -235,6 +236,8 @@ class ProfileFitnessHomeState extends State<ProfileFitnessHome>
                         ),
                       ),
                       const SizedBox(height: 24),
+                      const BMICalculator(),
+                      const SizedBox(height: 24),
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(14),
@@ -251,20 +254,21 @@ class ProfileFitnessHomeState extends State<ProfileFitnessHome>
                         ),
                         child: Column(
                           children: [
-                            const Text(
-                              "TOTAL WALKING STEPS",
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 14),
                             Text(
                               NumberFormat("#,###").format(_totalWalkingSteps),
                               style: const TextStyle(
-                                fontSize: 18,
+                                fontSize: 24,
                                 fontWeight: FontWeight.bold,
                                 color: Color(0xFF08DAD6),
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+                            const Text(
+                              "TOTAL WALKING STEPS",
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey,
                               ),
                             ),
                           ],
@@ -287,20 +291,21 @@ class ProfileFitnessHomeState extends State<ProfileFitnessHome>
                         ),
                         child: Column(
                           children: [
-                            const Text(
-                              "TOTAL JOGGING STEPS",
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 10),
                             Text(
                               NumberFormat("#,###").format(_totalJoggingSteps),
                               style: const TextStyle(
-                                fontSize: 18,
+                                fontSize: 24,
                                 fontWeight: FontWeight.bold,
                                 color: Color(0xFF08DAD6),
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+                            const Text(
+                              "TOTAL JOGGING STEPS",
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey,
                               ),
                             ),
                           ],
@@ -323,20 +328,21 @@ class ProfileFitnessHomeState extends State<ProfileFitnessHome>
                         ),
                         child: Column(
                           children: [
-                            const Text(
-                              "TOTAL RUNNING STEPS",
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 10),
                             Text(
                               NumberFormat("#,###").format(_totalRunningSteps),
                               style: const TextStyle(
-                                fontSize: 18,
+                                fontSize: 24,
                                 fontWeight: FontWeight.bold,
                                 color: Color(0xFF08DAD6),
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+                            const Text(
+                              "TOTAL RUNNING STEPS",
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey,
                               ),
                             ),
                           ],

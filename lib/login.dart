@@ -5,8 +5,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'choose_mode.dart';
 import 'forgot_password.dart';
-import 'home.dart';
 import 'register.dart';
 
 class Login extends StatefulWidget {
@@ -112,7 +112,7 @@ class LoginPageState extends State<Login> {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (context) => const Home(),
+              builder: (context) => const ChooseMode(),
             ),
           );
         }

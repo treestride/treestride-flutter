@@ -50,6 +50,7 @@ class JoggingCounterHomeStateFitness extends State<JoggingCounterHomeFitness>
   double _lastMagnitude = 0;
   int _joggingSteps = 0;
   int _totalSteps = 0;
+  int _totalJoggingSteps = 0;
   DateTime? _selectedDate;
   DateTime _currentDate = DateTime.now();
   DateTime _lastStepTime = DateTime.now();
@@ -98,6 +99,7 @@ class JoggingCounterHomeStateFitness extends State<JoggingCounterHomeFitness>
     setState(() {
       _joggingSteps = _prefs.getInt('joggingSteps') ?? 0;
       _totalSteps = _prefs.getInt('totalSteps') ?? 0;
+      _totalJoggingSteps = _prefs.getInt('totalJoggingSteps') ?? 0;
       _isJoggingGoalActive = _prefs.getBool('isJoggingGoalActive') ?? false;
       _joggingGoal = _prefs.getString('joggingGoal') ?? '0';
       _joggingGoalEndDate = _prefs.getString('joggingGoalEndDate') ?? '';
@@ -110,6 +112,7 @@ class JoggingCounterHomeStateFitness extends State<JoggingCounterHomeFitness>
     await _prefs.setString('joggingGoal', _joggingGoal);
     await _prefs.setString('joggingGoalEndDate', _joggingGoalEndDate);
     await _prefs.setInt('totalSteps', _totalSteps);
+    await _prefs.setInt('totalJoggingSteps', _totalJoggingSteps);
   }
 
   void _selectDate(BuildContext context) async {
@@ -184,8 +187,9 @@ class JoggingCounterHomeStateFitness extends State<JoggingCounterHomeFitness>
       setState(() {
         _joggingSteps++;
         _totalSteps++;
+        _totalJoggingSteps++;
       });
-      _updateJoggingSteps(_joggingSteps, _totalSteps);
+      _updateJoggingSteps(_joggingSteps, _totalSteps, _totalJoggingSteps);
       _lastStepTime = currentTime;
 
       // Check goal completion after each step
@@ -201,9 +205,11 @@ class JoggingCounterHomeStateFitness extends State<JoggingCounterHomeFitness>
     _lastMagnitude = magnitude;
   }
 
-  Future<void> _updateJoggingSteps(int newStepCount, int totalStepCount) async {
+  Future<void> _updateJoggingSteps(
+      int newStepCount, int totalStepCount, int totalJoggingSteps) async {
     await _prefs.setInt('joggingSteps', newStepCount);
     await _prefs.setInt('totalSteps', totalStepCount);
+    await _prefs.setInt('totalJoggingSteps', totalJoggingSteps);
   }
 
   Future<void> _checkGoalCompletion() async {
@@ -330,7 +336,7 @@ class JoggingCounterHomeStateFitness extends State<JoggingCounterHomeFitness>
             ),
             centerTitle: true,
             title: const Text(
-              'WALKING',
+              'JOGGING',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,

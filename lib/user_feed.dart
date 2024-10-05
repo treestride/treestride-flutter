@@ -637,7 +637,7 @@ class UserFeedPageState extends State<UserFeedPage>
                     GestureDetector(
                       onTap: () {},
                       child: const Icon(
-                        Icons.space_dashboard_outlined,
+                        Icons.view_carousel_outlined,
                         size: 30,
                       ),
                     ),
