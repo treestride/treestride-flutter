@@ -3,8 +3,6 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'fitness.dart';
 import 'profile_fitness.dart';
-import 'assessment_test.dart';
-import 'assessment_result.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,23 +36,6 @@ class AssessmentHome extends StatefulWidget {
 }
 
 class _AssessmentState extends State<AssessmentHome> {
-  bool _showTest = true;
-  List<String> _testAnswers = [];
-
-  void _completeTest(List<String> answers) {
-    setState(() {
-      _testAnswers = answers;
-      _showTest = false;
-    });
-  }
-
-  void _restartTest() {
-    setState(() {
-      _showTest = true;
-      _testAnswers = [];
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return PopScope(
@@ -89,7 +70,7 @@ class _AssessmentState extends State<AssessmentHome> {
           ),
           centerTitle: true,
           title: const Text(
-            'ASSESSMENT',
+            'WORKOUT',
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
@@ -156,14 +137,153 @@ class _AssessmentState extends State<AssessmentHome> {
               padding: const EdgeInsets.all(24.0),
               child: Column(
                 children: [
-                  if (_showTest)
-                    AssessmentTest(onComplete: _completeTest)
-                  else
-                    AssessmentResults(
-                      answers: _testAnswers,
-                      onReassess: _restartTest,
+                  GestureDetector(
+                    child: Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(4),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.5),
+                            blurRadius: 2,
+                            blurStyle: BlurStyle.outer,
+                          )
+                        ],
+                        color: const Color(0xFFFEFEFE),
+                      ),
+                      width: double.infinity,
+                      child: Column(
+                        children: [
+                          ClipRRect(
+                            child: Image.asset(
+                              "assets/images/walking.png",
+                              height: 64,
+                              width: 64,
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          const Text(
+                            "STRENGTH",
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  const SizedBox(height: 20),
+                  ),
+                  const SizedBox(height: 24),
+                  GestureDetector(
+                    child: Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(4),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.5),
+                            blurRadius: 2,
+                            blurStyle: BlurStyle.outer,
+                          )
+                        ],
+                        color: const Color(0xFFFEFEFE),
+                      ),
+                      width: double.infinity,
+                      child: Column(
+                        children: [
+                          ClipRRect(
+                            child: Image.asset(
+                              "assets/images/walking.png",
+                              height: 64,
+                              width: 64,
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          const Text(
+                            "ENDURANCE",
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  GestureDetector(
+                    child: Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(4),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.5),
+                            blurRadius: 2,
+                            blurStyle: BlurStyle.outer,
+                          )
+                        ],
+                        color: const Color(0xFFFEFEFE),
+                      ),
+                      width: double.infinity,
+                      child: Column(
+                        children: [
+                          ClipRRect(
+                            child: Image.asset(
+                              "assets/images/walking.png",
+                              height: 64,
+                              width: 64,
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          const Text(
+                            "BALANCE",
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  GestureDetector(
+                    child: Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(4),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.5),
+                            blurRadius: 2,
+                            blurStyle: BlurStyle.outer,
+                          )
+                        ],
+                        color: const Color(0xFFFEFEFE),
+                      ),
+                      width: double.infinity,
+                      child: Column(
+                        children: [
+                          ClipRRect(
+                            child: Image.asset(
+                              "assets/images/walking.png",
+                              height: 64,
+                              width: 64,
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          const Text(
+                            "FLEXIBILITY",
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),

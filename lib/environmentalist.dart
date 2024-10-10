@@ -1,18 +1,15 @@
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:treestride/jogging.dart';
 import 'package:treestride/running.dart';
 
 import 'announcements.dart';
 import 'fitness.dart';
-import 'offline.dart';
 import 'user_feed.dart';
 import 'leaderboard.dart';
 import 'login.dart';
@@ -54,59 +51,10 @@ class HomePage extends StatefulWidget {
 
 class HomePageState extends State<HomePage> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  late Stream<List<ConnectivityResult>> _connectivityStream;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _initializeApp();
-    });
-    _connectivityStream = Connectivity().onConnectivityChanged;
-    _checkConnection();
-    //_requestPermissions();
-  }
-
-  /*
- Future<void> _requestPermissions() async {
-    await [
-      Permission.storage,
-      Permission.activityRecognition,
-      Permission.camera
-    ].request();
-  }
-  */
-
-  Future<void> _initializeApp() async {
-    final provider = Provider.of<UserDataProvider>(context, listen: false);
-    try {
-      await provider.fetchUserData();
-      await provider.fetchMissionData();
-      await provider.checkMissionCompletion();
-      await provider.checkForNewAnnouncements();
-      await provider.checkForNewPosts();
-      await provider.initNotifications();
-    } catch (error) {
-      _showErrorToast("Initialization error: $error");
-      Future.delayed(Duration.zero, () {
-        _auth.signOut();
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const Login()),
-        );
-      });
-    }
-  }
-
-  Future<void> _checkConnection() async {
-    _connectivityStream.listen((List<ConnectivityResult> results) {
-      if (results.contains(ConnectivityResult.none) || results.isEmpty) {
-        // No internet connection, navigate to Offline page
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const Offline()),
-        );
-      }
-    });
   }
 
   void _showUserProfile(UserDataProvider userDataProvider) async {
@@ -722,7 +670,7 @@ class HomePageState extends State<HomePage> {
                           );
                         },
                         child: const Icon(
-                          Icons.view_carousel_outlined,
+                          Icons.view_agenda_outlined,
                           size: 30,
                         ),
                       ),

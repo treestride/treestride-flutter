@@ -12,7 +12,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'announcements.dart';
 import 'assessment.dart';
-import 'home.dart';
+import 'environmentalist.dart';
 import 'jogging_fitness.dart';
 import 'login.dart';
 import 'offline.dart';

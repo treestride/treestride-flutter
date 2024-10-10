@@ -9,7 +9,7 @@ import 'package:provider/provider.dart';
 
 import 'offline.dart';
 import 'user_feed.dart';
-import 'home.dart';
+import 'environmentalist.dart';
 import 'profile.dart';
 import 'plant_tree.dart';
 import 'user_data_provider.dart';
@@ -144,7 +144,7 @@ class LeaderboardHomeState extends State<LeaderboardHome> {
                         );
                       },
                       child: const Icon(
-                        Icons.view_carousel_outlined,
+                        Icons.view_agenda_outlined,
                         size: 30,
                       ),
                     ),

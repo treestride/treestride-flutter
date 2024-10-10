@@ -19,7 +19,7 @@ import 'offline.dart';
 import 'user_trees.dart';
 import 'user_certificates.dart';
 import 'user_feed.dart';
-import 'home.dart';
+import 'environmentalist.dart';
 import 'leaderboard.dart';
 import 'qr_viewer.dart';
 import 'plant_tree.dart';
@@ -351,7 +351,7 @@ class ProfileState extends State<Profile> {
                             );
                           },
                           child: const Icon(
-                            Icons.view_carousel_outlined,
+                            Icons.view_agenda_outlined,
                             size: 30,
                           ),
                         ),

@@ -10,7 +10,7 @@ import 'package:sensors_plus/sensors_plus.dart';
 
 import 'dart:async';
 import 'dart:math';
-import 'home.dart';
+import 'environmentalist.dart';
 import 'offline.dart';
 import 'user_data_provider.dart';
 

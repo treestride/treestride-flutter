@@ -8,7 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:open_mail_app/open_mail_app.dart';
-import 'home.dart';
+import 'environmentalist.dart';
 import 'offline.dart';
 
 class EmailVerificationPage extends StatefulWidget {

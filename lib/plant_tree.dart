@@ -14,7 +14,7 @@ import 'package:treestride/user_data_provider.dart';
 import 'offline.dart';
 import 'user_feed.dart';
 import 'certificate.dart';
-import 'home.dart';
+import 'environmentalist.dart';
 import 'leaderboard.dart';
 import 'profile.dart';
 
@@ -427,7 +427,7 @@ class TreeShopHomeState extends State<TreeShopHome> {
                           );
                         },
                         child: const Icon(
-                          Icons.view_carousel_outlined,
+                          Icons.view_agenda_outlined,
                           size: 30,
                         ),
                       ),

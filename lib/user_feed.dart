@@ -21,7 +21,7 @@ import 'package:provider/provider.dart';
 import 'package:treestride/offline.dart';
 
 import 'create_edit.dart';
-import 'home.dart';
+import 'environmentalist.dart';
 import 'leaderboard.dart';
 import 'plant_tree.dart';
 import 'profile.dart';
@@ -79,6 +79,50 @@ class UserFeedPageState extends State<UserFeedPage>
         );
       }
     });
+  }
+
+  Future<void> _likePost(String postId) async {
+    final user = _auth.currentUser;
+    if (user != null) {
+      final postRef = _firestore.collection('posts').doc(postId);
+      final postDoc = await postRef.get();
+      final likes = List<String>.from(postDoc['likes'] ?? []);
+
+      if (likes.contains(user.uid)) {
+        // User has already liked the post, so unlike it
+        likes.remove(user.uid);
+      } else {
+        // User hasn't liked the post, so like it
+        likes.add(user.uid);
+      }
+
+      await postRef.update({'likes': likes});
+      setState(() {
+        // Update the local post data
+        final index = _posts.indexWhere((post) => post.id == postId);
+        if (index != -1) {
+          _posts[index] = postDoc;
+        }
+      });
+    }
+  }
+
+  Future<void> _reportPost(String postId) async {
+    final postRef = _firestore.collection('posts').doc(postId);
+    final postDoc = await postRef.get();
+    final postData = postDoc.data() as Map<String, dynamic>;
+
+    await _firestore.collection('reported_posts').add({
+      'postId': postId,
+      'content': postData['text'],
+      'imageUrl': postData['imageUrl'],
+      'reportedAt': FieldValue.serverTimestamp(),
+      'reportedBy': _auth.currentUser!.uid,
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Post reported successfully')),
+    );
   }
 
   Future<void> _postViewed() async {
@@ -155,6 +199,7 @@ class UserFeedPageState extends State<UserFeedPage>
       'text': text,
       'imageUrl': imageUrl,
       'timestamp': FieldValue.serverTimestamp(),
+      'likes': [], // Initialize empty likes array
     });
 
     // Refresh the feed
@@ -230,6 +275,8 @@ class UserFeedPageState extends State<UserFeedPage>
     bool isCurrentUserPost = postData['userId'] == _auth.currentUser!.uid;
     DateTime timestamp = (postData['timestamp'] as Timestamp).toDate();
     String formattedDate = DateFormat.yMMMd().add_jm().format(timestamp);
+    List<String> likes = List<String>.from(postData['likes'] ?? []);
+    bool isLikedByCurrentUser = likes.contains(_auth.currentUser!.uid);
 
     return Container(
       width: double.infinity,
@@ -323,6 +370,27 @@ class UserFeedPageState extends State<UserFeedPage>
                 color: Colors.grey[600],
               ),
             ),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              if (!isCurrentUserPost)
+                IconButton(
+                  icon: Icon(
+                    isLikedByCurrentUser
+                        ? Icons.favorite
+                        : Icons.favorite_border,
+                    color: isLikedByCurrentUser ? Colors.red : null,
+                  ),
+                  onPressed: () => _likePost(post.id),
+                ),
+              Text('${likes.length} likes'),
+              if (!isCurrentUserPost)
+                IconButton(
+                  icon: const Icon(Icons.flag),
+                  onPressed: () => _reportPost(post.id),
+                ),
+            ],
           ),
           if (isCurrentUserPost)
             Padding(
@@ -637,7 +705,7 @@ class UserFeedPageState extends State<UserFeedPage>
                     GestureDetector(
                       onTap: () {},
                       child: const Icon(
-                        Icons.view_carousel_outlined,
+                        Icons.view_agenda_outlined,
                         size: 30,
                       ),
                     ),
