@@ -1,5 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'workout.dart';
+
+class BMI extends StatelessWidget {
+  const BMI({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      theme: ThemeData(
+        textTheme: GoogleFonts.exo2TextTheme(
+          Theme.of(context).textTheme,
+        ),
+        primaryTextTheme: GoogleFonts.exoTextTheme(
+          Theme.of(context).primaryTextTheme,
+        ),
+      ),
+      home: const BMICalculator(),
+    );
+  }
+}
 
 class BMICalculator extends StatefulWidget {
   const BMICalculator({super.key});
@@ -85,63 +107,110 @@ class BMICalculatorState extends State<BMICalculator> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFEFEFE),
-        borderRadius: BorderRadius.circular(4),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0xFFD4D4D4),
-            blurRadius: 2,
-            blurStyle: BlurStyle.outer,
-          )
-        ],
-      ),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              'BMI ASSESSMENT',
-              style: TextStyle(
-                fontSize: 24,
-                color: Colors.black,
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.center,
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (didPop) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const Workout(),
+          ),
+        );
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFFEFEFEF),
+        appBar: AppBar(
+          elevation: 2.0,
+          backgroundColor: const Color(0xFFFEFEFE),
+          shadowColor: Colors.grey.withOpacity(0.5),
+          leading: IconButton(
+            onPressed: () {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const Workout(),
+                ),
+              );
+            },
+            icon: const Icon(
+              Icons.arrow_back,
             ),
-            const SizedBox(height: 24),
-            _buildInputField(_heightController, 'Height (cm)'),
-            const SizedBox(height: 16),
-            _buildInputField(_weightController, 'Weight (kg)'),
-            const SizedBox(height: 16),
-            _buildInputField(_ageController, 'Age'),
-            const SizedBox(height: 16),
-            _buildGenderSelector(),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: _calculateBMI,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF08DAD6),
-                shape: RoundedRectangleBorder(
+            iconSize: 24,
+          ),
+          centerTitle: true,
+          title: const Text(
+            'BMI ASSESSMENT',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        body: Center(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEFEFE),
                   borderRadius: BorderRadius.circular(4),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0xFFD4D4D4),
+                      blurRadius: 2,
+                      blurStyle: BlurStyle.outer,
+                    )
+                  ],
                 ),
-              ),
-              child: const Text(
-                'CALCULATE BMI',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.black,
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Text(
+                        "YOUR DATA",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 24,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 24),
+                      _buildInputField(_heightController, 'Height (cm)'),
+                      const SizedBox(height: 16),
+                      _buildInputField(_weightController, 'Weight (kg)'),
+                      const SizedBox(height: 16),
+                      _buildInputField(_ageController, 'Age'),
+                      const SizedBox(height: 16),
+                      _buildGenderSelector(),
+                      const SizedBox(height: 24),
+                      ElevatedButton(
+                        onPressed: _calculateBMI,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF08DAD6),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                        child: const Text(
+                          'CALCULATE BMI',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ),
+                      if (_bmi != null) ...[
+                        const SizedBox(height: 24),
+                        _buildResultCard(),
+                      ],
+                    ],
+                  ),
                 ),
               ),
             ),
-            if (_bmi != null) ...[
-              const SizedBox(height: 24),
-              _buildResultCard(),
-            ],
-          ],
+          ),
         ),
       ),
     );

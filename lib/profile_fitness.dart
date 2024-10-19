@@ -4,8 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'assessment.dart';
-import 'bmi_calculator.dart';
+import 'workout.dart';
 import 'fitness.dart';
 import 'user_data_provider.dart';
 
@@ -137,7 +136,7 @@ class ProfileFitnessHomeState extends State<ProfileFitnessHome>
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const Assessment(),
+                          builder: (context) => const Workout(),
                         ),
                       );
                     },
@@ -235,8 +234,6 @@ class ProfileFitnessHomeState extends State<ProfileFitnessHome>
                           ],
                         ),
                       ),
-                      const SizedBox(height: 24),
-                      const BMICalculator(),
                       const SizedBox(height: 24),
                       Container(
                         width: double.infinity,

@@ -322,7 +322,7 @@ class UserCertificatesState extends State<UserCertificates> {
                   ),
                   onPressed: _fetchCertificates,
                   child: const Text(
-                    'Load More',
+                    'LOAD MORE',
                     style: TextStyle(
                       color: Colors.black,
                     ),

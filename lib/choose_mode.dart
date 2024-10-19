@@ -151,7 +151,7 @@ class _ChooseModeState extends State<ChooseModeHome> {
                       },
                       child: ClipRRect(
                         child: Image.asset(
-                          "images/planting.png",
+                          "assets/images/planting.png",
                           height: 200,
                           width: 200,
                         ),
@@ -180,7 +180,7 @@ class _ChooseModeState extends State<ChooseModeHome> {
                       },
                       child: ClipRRect(
                         child: Image.asset(
-                          "images/fitness.png",
+                          "assets/images/fitness.png",
                           height: 200,
                           width: 200,
                         ),

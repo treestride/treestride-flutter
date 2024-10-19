@@ -291,7 +291,7 @@ class CreateEditPostPageState extends State<CreateEditPostPage> {
                           }
                         },
                         child: const Text(
-                          'Confirm Post',
+                          'CONFIRM POST',
                           style: TextStyle(
                             color: Colors.black,
                             fontWeight: FontWeight.bold,

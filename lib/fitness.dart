@@ -11,7 +11,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'announcements.dart';
-import 'assessment.dart';
+import 'workout.dart';
 import 'environmentalist.dart';
 import 'jogging_fitness.dart';
 import 'login.dart';
@@ -411,7 +411,7 @@ class FitnessState extends State<FitnessMode> {
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const Assessment(),
+                          builder: (context) => const Workout(),
                         ),
                       );
                     },

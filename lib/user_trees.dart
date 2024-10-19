@@ -353,7 +353,7 @@ class PlantedTreesState extends State<PlantedTrees> {
 
   Widget _buildLoadMoreButton() {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 14),
+      padding: const EdgeInsets.only(bottom: 24),
       child: Column(
         children: [
           ElevatedButton(
@@ -362,7 +362,7 @@ class PlantedTreesState extends State<PlantedTrees> {
             ),
             onPressed: _fetchUserPlantRequests,
             child: const Text(
-              'Load More',
+              'LOAD MORE',
               style: TextStyle(
                 color: Colors.black,
               ),

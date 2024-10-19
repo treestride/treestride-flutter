@@ -847,7 +847,7 @@ class UserFeedPageState extends State<UserFeedPage>
                                   ),
                                   onPressed: _loadPosts,
                                   child: const Text(
-                                    'Load More',
+                                    'LOAD MORE',
                                     style: TextStyle(
                                       color: Colors.black,
                                     ),
