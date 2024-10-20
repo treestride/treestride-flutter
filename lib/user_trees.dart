@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -5,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'offline.dart';
 import 'plant_tree.dart';
@@ -44,6 +47,15 @@ class PlantedTreesState extends State<PlantedTrees> {
     });
   }
 
+  Future<void> _launchMaps(String lat, String lng) async {
+    final url = 'https://www.google.com/maps/search/?api=1&query=$lat,$lng';
+    if (await canLaunch(url)) {
+      await launch(url);
+    } else {
+      throw 'Could not launch $url';
+    }
+  }
+
   Future<void> _fetchUserPlantRequests() async {
     if (isLoading || !hasMore) return;
 
@@ -54,7 +66,6 @@ class PlantedTreesState extends State<PlantedTrees> {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       try {
-        // Get the current user's username
         final userDoc = await FirebaseFirestore.instance
             .collection('users')
             .doc(user.uid)
@@ -71,10 +82,11 @@ class PlantedTreesState extends State<PlantedTrees> {
           return;
         }
 
-        // Fetch plant requests using the username
         Query query = FirebaseFirestore.instance
             .collection('plant_requests')
             .where('username', isEqualTo: username)
+            .where('plantingStatus',
+                isEqualTo: 'approved') // Only fetch approved requests
             .limit(pageSize);
 
         if (lastDocument != null) {
@@ -97,21 +109,9 @@ class PlantedTreesState extends State<PlantedTrees> {
             .map((doc) => doc.data() as Map<String, dynamic>)
             .toList();
 
-        // Sort the new requests by timestamp (most recent first)
-        newRequests.sort((a, b) {
-          final aTimestamp = a['timestamp'] as Timestamp;
-          final bTimestamp = b['timestamp'] as Timestamp;
-          return bTimestamp.compareTo(aTimestamp);
-        });
-
         setState(() {
           userPlantRequests.addAll(newRequests);
-          // Sort the entire list after adding new requests
-          userPlantRequests.sort((a, b) {
-            final aTimestamp = a['timestamp'] as Timestamp;
-            final bTimestamp = b['timestamp'] as Timestamp;
-            return bTimestamp.compareTo(aTimestamp);
-          });
+          _sortPlantRequests();
           isLoading = false;
           hasMore = querySnapshot.docs.length >= pageSize;
         });
@@ -122,6 +122,15 @@ class PlantedTreesState extends State<PlantedTrees> {
         });
       }
     }
+  }
+
+  // Method to sort the plant requests
+  void _sortPlantRequests() {
+    userPlantRequests.sort((a, b) {
+      final aTimestamp = a['timestamp'] as Timestamp;
+      final bTimestamp = b['timestamp'] as Timestamp;
+      return bTimestamp.compareTo(aTimestamp); // Sort in descending order
+    });
   }
 
   Future<void> _refreshList() async {
@@ -313,13 +322,11 @@ class PlantedTreesState extends State<PlantedTrees> {
                     ],
                   ),
                   const SizedBox(height: 8),
-                  Text(
-                    'Planting Status: ${request['plantingStatus']}',
+                  const Text(
+                    'Planting Status: Approved',
                     style: TextStyle(
                       fontSize: 12,
-                      color: request['plantingStatus'] == 'pending'
-                          ? Colors.orange
-                          : Colors.green,
+                      color: Colors.green,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -327,7 +334,15 @@ class PlantedTreesState extends State<PlantedTrees> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        final lat = request['locationLat'];
+                        final lng = request['locationLong'];
+                        if (lat != null && lng != null) {
+                          _launchMaps(lat, lng);
+                        } else {
+                          _showToast('Location not available');
+                        }
+                      },
                       style: ElevatedButton.styleFrom(
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(4),

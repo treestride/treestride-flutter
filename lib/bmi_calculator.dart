@@ -223,7 +223,10 @@ class BMICalculatorState extends State<BMICalculator> {
       decoration: InputDecoration(
         labelText: label,
         filled: true,
-        floatingLabelStyle: const TextStyle(color: Colors.grey),
+        floatingLabelStyle: const TextStyle(
+          color: Colors.grey,
+          fontWeight: FontWeight.bold,
+        ),
         fillColor: const Color(0xFFEFEFEF),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(4),

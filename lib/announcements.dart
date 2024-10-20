@@ -241,7 +241,7 @@ class AnnouncementPageState extends State<AnnouncementPage> {
                               ),
                               onPressed: _loadMoreAnnouncements,
                               child: const Text(
-                                'Load More',
+                                'LOAD MORE',
                                 style: TextStyle(
                                   color: Colors.black,
                                 ),
@@ -375,7 +375,7 @@ class AnnouncementCard extends StatelessWidget {
                     onPressed: _openInGoogleMaps,
                     icon: const Icon(Icons.map),
                     label: const Text(
-                      'Open In Google Map',
+                      'OPEN IN GOOGLE MAP',
                       style: TextStyle(
                         color: Colors.black,
                       ),

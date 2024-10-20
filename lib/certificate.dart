@@ -135,7 +135,7 @@ class CertificateState extends State<Certificate> {
 
   Future<void> _captureAndSaveCertificate() async {
     // Wait for the widget to be fully rendered
-    await Future.delayed(const Duration(milliseconds: 500));
+    await Future.delayed(const Duration(milliseconds: 1000));
 
     if (!mounted) return;
 

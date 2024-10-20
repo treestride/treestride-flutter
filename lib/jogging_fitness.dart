@@ -1,5 +1,7 @@
 // ignore_for_file: deprecated_member_use
 
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -59,6 +61,7 @@ class JoggingCounterHomeStateFitness extends State<JoggingCounterHomeFitness>
   bool _isJoggingGoalActive = false;
   String _joggingGoal = '0';
   String _joggingGoalEndDate = '';
+  Map<String, int> _joggingStepHistory = {};
 
   @override
   void initState() {
@@ -87,6 +90,7 @@ class JoggingCounterHomeStateFitness extends State<JoggingCounterHomeFitness>
       _prefs = await SharedPreferences.getInstance();
       _loadDataFromLocalStorage();
       await _checkGoalCompletion();
+      _loadStepHistory();
       setState(() {
         _currentDate = DateTime.now();
       });
@@ -103,6 +107,12 @@ class JoggingCounterHomeStateFitness extends State<JoggingCounterHomeFitness>
       _isJoggingGoalActive = _prefs.getBool('isJoggingGoalActive') ?? false;
       _joggingGoal = _prefs.getString('joggingGoal') ?? '0';
       _joggingGoalEndDate = _prefs.getString('joggingGoalEndDate') ?? '';
+      String? joggingStepHistoryJson = _prefs.getString('stepHistory');
+      if (joggingStepHistoryJson != null) {
+        Map<String, dynamic> decodedMap = json.decode(joggingStepHistoryJson);
+        _joggingStepHistory =
+            decodedMap.map((key, value) => MapEntry(key, value as int));
+      }
     });
   }
 
@@ -113,6 +123,20 @@ class JoggingCounterHomeStateFitness extends State<JoggingCounterHomeFitness>
     await _prefs.setString('joggingGoalEndDate', _joggingGoalEndDate);
     await _prefs.setInt('totalSteps', _totalSteps);
     await _prefs.setInt('totalJoggingSteps', _totalJoggingSteps);
+    await _prefs.setString(
+        'joggingStepHistory', json.encode(_joggingStepHistory));
+  }
+
+  void _loadStepHistory() {
+    String today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    if (!_joggingStepHistory.containsKey(today)) {
+      _joggingStepHistory[today] = 0;
+    }
+  }
+
+  void _updateStepHistory() {
+    String today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    _joggingStepHistory[today] = (_joggingStepHistory[today] ?? 0) + 1;
   }
 
   void _selectDate(BuildContext context) async {
@@ -188,6 +212,7 @@ class JoggingCounterHomeStateFitness extends State<JoggingCounterHomeFitness>
         _joggingSteps++;
         _totalSteps++;
         _totalJoggingSteps++;
+        _updateStepHistory();
       });
       _updateJoggingSteps(_joggingSteps, _totalSteps, _totalJoggingSteps);
       _lastStepTime = currentTime;
@@ -342,6 +367,20 @@ class JoggingCounterHomeStateFitness extends State<JoggingCounterHomeFitness>
                 fontWeight: FontWeight.bold,
               ),
             ),
+            actions: [
+              IconButton(
+                onPressed: () => {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => StepHistoryPage(
+                          joggingStepHistory: _joggingStepHistory),
+                    ),
+                  ),
+                },
+                icon: const Icon(Icons.history),
+              ),
+            ],
           ),
           body: Center(
             child: SingleChildScrollView(
@@ -676,5 +715,83 @@ class JoggingCounterHomeStateFitness extends State<JoggingCounterHomeFitness>
     });
     _saveDataToLocalStorage();
     _showToast("Goal Reset!");
+  }
+}
+
+class StepHistoryPage extends StatelessWidget {
+  final Map<String, int> joggingStepHistory;
+
+  const StepHistoryPage({super.key, required this.joggingStepHistory});
+
+  @override
+  Widget build(BuildContext context) {
+    List<MapEntry<String, int>> sortedEntries = joggingStepHistory.entries
+        .toList()
+      ..sort((a, b) => b.key.compareTo(a.key));
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFEFEFEF),
+      appBar: AppBar(
+        elevation: 2.0,
+        backgroundColor: const Color(0xFFFEFEFE),
+        shadowColor: Colors.grey.withOpacity(0.5),
+        leading: IconButton(
+          onPressed: () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const JoggingCounterFitness(),
+              ),
+            );
+          },
+          icon: const Icon(
+            Icons.arrow_back,
+          ),
+          iconSize: 24,
+        ),
+        centerTitle: true,
+        title: const Text(
+          'JOGGING HISTORY',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+      body: ListView.builder(
+        padding: const EdgeInsets.all(24),
+        itemCount: sortedEntries.length,
+        itemBuilder: (context, index) {
+          final entry = sortedEntries[index];
+          return Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFEFEFE),
+              borderRadius: BorderRadius.circular(4),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0xFFD4D4D4),
+                  blurRadius: 2,
+                  blurStyle: BlurStyle.outer,
+                )
+              ],
+            ),
+            child: ListTile(
+              title: Text(
+                DateFormat('MMMM d, yyyy').format(
+                  DateTime.parse(entry.key),
+                ),
+              ),
+              trailing: Text(
+                '${entry.value} steps',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
   }
 }

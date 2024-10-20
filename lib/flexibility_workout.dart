@@ -44,7 +44,7 @@ class FlexibilityWorkoutPlan extends StatelessWidget {
           ),
         ),
         body: ListView(
-          padding: const EdgeInsets.all(14.0),
+          padding: const EdgeInsets.all(24.0),
           children: [
             _buildIntroCard(),
             ...List.generate(7, (index) => _buildDayCard(index + 1)),
@@ -98,7 +98,7 @@ class FlexibilityWorkoutPlan extends StatelessWidget {
 
     return Column(
       children: [
-        const SizedBox(height: 14),
+        const SizedBox(height: 24),
         Container(
           decoration: BoxDecoration(
             color: const Color(0xFFFEFEFE),
@@ -120,7 +120,7 @@ class FlexibilityWorkoutPlan extends StatelessWidget {
                   'Day $day - $title',
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
-                    fontSize: 20,
+                    fontSize: 18,
                   ),
                 ),
               ),
@@ -145,12 +145,12 @@ class FlexibilityWorkoutPlan extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
-          const Icon(Icons.fitness_center, color: Colors.black54, size: 20),
+          const Icon(Icons.fitness_center, color: Colors.black54, size: 14),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               exercise,
-              style: const TextStyle(fontSize: 16),
+              style: const TextStyle(fontSize: 14),
             ),
           ),
         ],
