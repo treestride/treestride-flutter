@@ -20,11 +20,11 @@ import 'user_data_provider.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const Home());
+  runApp(const Environmentalist());
 }
 
-class Home extends StatelessWidget {
-  const Home({super.key});
+class Environmentalist extends StatelessWidget {
+  const Environmentalist({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -37,19 +37,19 @@ class Home extends StatelessWidget {
           Theme.of(context).primaryTextTheme,
         ),
       ),
-      home: const HomePage(),
+      home: const EnvironmentalistPage(),
     );
   }
 }
 
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+class EnvironmentalistPage extends StatefulWidget {
+  const EnvironmentalistPage({super.key});
 
   @override
-  HomePageState createState() => HomePageState();
+  EnvironmentalistPageState createState() => EnvironmentalistPageState();
 }
 
-class HomePageState extends State<HomePage> {
+class EnvironmentalistPageState extends State<EnvironmentalistPage> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   @override
@@ -608,7 +608,7 @@ class HomePageState extends State<HomePage> {
                           context,
                           MaterialPageRoute(
                             builder: (context) =>
-                                const AnnouncementPage(previousPage: Home()),
+                                const AnnouncementPage(previousPage: Environmentalist()),
                           ),
                         );
                       },

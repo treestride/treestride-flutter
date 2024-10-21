@@ -366,7 +366,7 @@ class TreeShopHomeState extends State<TreeShopHome> {
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
-                builder: (context) => const Home(),
+                builder: (context) => const Environmentalist(),
               ),
             );
           },
@@ -381,7 +381,7 @@ class TreeShopHomeState extends State<TreeShopHome> {
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const Home(),
+                      builder: (context) => const Environmentalist(),
                     ),
                   );
                 },
@@ -476,7 +476,7 @@ class TreeShopHomeState extends State<TreeShopHome> {
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const Home(),
+                          builder: (context) => const Environmentalist(),
                         ),
                       );
                     },

@@ -145,7 +145,7 @@ class _ChooseModeState extends State<ChooseModeHome> {
                         Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const Home(),
+                            builder: (context) => const Environmentalist(),
                           ),
                         ),
                       },

@@ -50,6 +50,7 @@ class JoggingCounterHomeStateFitness extends State<JoggingCounterHomeFitness>
   bool _isCounting = false;
   final double _sensitivity = 6;
   double _lastMagnitude = 0;
+  int _dailyJoggingSteps = 0;
   int _joggingSteps = 0;
   int _totalSteps = 0;
   int _totalJoggingSteps = 0;
@@ -89,8 +90,8 @@ class JoggingCounterHomeStateFitness extends State<JoggingCounterHomeFitness>
     try {
       _prefs = await SharedPreferences.getInstance();
       _loadDataFromLocalStorage();
+      _checkAndResetDailySteps();
       await _checkGoalCompletion();
-      _loadStepHistory();
       setState(() {
         _currentDate = DateTime.now();
       });
@@ -107,11 +108,13 @@ class JoggingCounterHomeStateFitness extends State<JoggingCounterHomeFitness>
       _isJoggingGoalActive = _prefs.getBool('isJoggingGoalActive') ?? false;
       _joggingGoal = _prefs.getString('joggingGoal') ?? '0';
       _joggingGoalEndDate = _prefs.getString('joggingGoalEndDate') ?? '';
-      String? joggingStepHistoryJson = _prefs.getString('stepHistory');
+      String? joggingStepHistoryJson = _prefs.getString('joggingStepHistory');
       if (joggingStepHistoryJson != null) {
         Map<String, dynamic> decodedMap = json.decode(joggingStepHistoryJson);
         _joggingStepHistory =
             decodedMap.map((key, value) => MapEntry(key, value as int));
+      } else {
+        _joggingStepHistory = {};
       }
     });
   }
@@ -123,20 +126,17 @@ class JoggingCounterHomeStateFitness extends State<JoggingCounterHomeFitness>
     await _prefs.setString('joggingGoalEndDate', _joggingGoalEndDate);
     await _prefs.setInt('totalSteps', _totalSteps);
     await _prefs.setInt('totalJoggingSteps', _totalJoggingSteps);
+    await _prefs.setInt('dailyJoggingSteps', _dailyJoggingSteps);
     await _prefs.setString(
         'joggingStepHistory', json.encode(_joggingStepHistory));
-  }
-
-  void _loadStepHistory() {
-    String today = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    if (!_joggingStepHistory.containsKey(today)) {
-      _joggingStepHistory[today] = 0;
-    }
+    await _prefs.setString('lastJoggingRecordedDay',
+        DateFormat('yyyy-MM-dd').format(DateTime.now()));
   }
 
   void _updateStepHistory() {
     String today = DateFormat('yyyy-MM-dd').format(DateTime.now());
     _joggingStepHistory[today] = (_joggingStepHistory[today] ?? 0) + 1;
+    _saveDataToLocalStorage();
   }
 
   void _selectDate(BuildContext context) async {
@@ -200,6 +200,8 @@ class JoggingCounterHomeStateFitness extends State<JoggingCounterHomeFitness>
   }
 
   void _countSteps(UserAccelerometerEvent event) {
+    _checkAndResetDailySteps();
+
     double magnitude =
         sqrt(event.x * event.x + event.y * event.y + event.z * event.z);
     DateTime currentTime = DateTime.now();
@@ -209,12 +211,18 @@ class JoggingCounterHomeStateFitness extends State<JoggingCounterHomeFitness>
         timeDiff.inMilliseconds > 300 &&
         magnitude - _lastMagnitude > 1.4) {
       setState(() {
+        _dailyJoggingSteps++;
         _joggingSteps++;
         _totalSteps++;
         _totalJoggingSteps++;
         _updateStepHistory();
+        _updateJoggingSteps(
+          _joggingSteps,
+          _totalSteps,
+          _totalJoggingSteps,
+          _dailyJoggingSteps,
+        );
       });
-      _updateJoggingSteps(_joggingSteps, _totalSteps, _totalJoggingSteps);
       _lastStepTime = currentTime;
 
       // Check goal completion after each step
@@ -230,10 +238,11 @@ class JoggingCounterHomeStateFitness extends State<JoggingCounterHomeFitness>
     _lastMagnitude = magnitude;
   }
 
-  Future<void> _updateJoggingSteps(
-      int newStepCount, int totalStepCount, int totalJoggingSteps) async {
+  Future<void> _updateJoggingSteps(int newStepCount, int totalStepCount,
+      int totalJoggingSteps, int dailyJoggingSteps) async {
     await _prefs.setInt('joggingSteps', newStepCount);
     await _prefs.setInt('totalSteps', totalStepCount);
+    await _prefs.setInt('dailyJoggingSteps', dailyJoggingSteps);
     await _prefs.setInt('totalJoggingSteps', totalJoggingSteps);
   }
 
@@ -253,6 +262,26 @@ class JoggingCounterHomeStateFitness extends State<JoggingCounterHomeFitness>
         _saveDataToLocalStorage();
         _showToast("Congratulations! You've completed your jogging goal!");
       }
+    }
+  }
+
+  void _checkAndResetDailySteps() {
+    String today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    String lastRecordedDay = _prefs.getString('lastJoggingRecordedDay') ?? '';
+
+    if (today != lastRecordedDay) {
+      // It's a new day, reset the jogging steps
+      _dailyJoggingSteps = 0;
+      _prefs.setInt('dailyJoggingSteps', 0);
+      _prefs.setString('lastJoggingRecordedDay', today);
+
+      // Ensure there's an entry for today in the history
+      if (!_joggingStepHistory.containsKey(today)) {
+        _joggingStepHistory[today] = 0;
+      }
+
+      // Save the updated history
+      _saveDataToLocalStorage();
     }
   }
 

@@ -293,7 +293,7 @@ class WalkingCounterHomeState extends State<WalkingCounterHome>
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const Home(),
+                  builder: (context) => const Environmentalist(),
                 ),
               );
             },
@@ -309,7 +309,7 @@ class WalkingCounterHomeState extends State<WalkingCounterHome>
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const Home(),
+                        builder: (context) => const Environmentalist(),
                       ),
                     );
                   },

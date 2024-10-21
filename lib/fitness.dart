@@ -187,7 +187,7 @@ class FitnessState extends State<FitnessMode> {
                   onPressed: () {
                     Navigator.of(context).pop();
                     _navigateWithConnectivityCheck(
-                      const Home(),
+                      const Environmentalist(),
                     );
                   },
                   child: const Row(

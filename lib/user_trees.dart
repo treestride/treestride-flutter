@@ -66,6 +66,7 @@ class PlantedTreesState extends State<PlantedTrees> {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       try {
+        // Get the current user's username
         final userDoc = await FirebaseFirestore.instance
             .collection('users')
             .doc(user.uid)
@@ -82,11 +83,10 @@ class PlantedTreesState extends State<PlantedTrees> {
           return;
         }
 
+        // Fetch plant requests using the username
         Query query = FirebaseFirestore.instance
             .collection('plant_requests')
             .where('username', isEqualTo: username)
-            .where('plantingStatus',
-                isEqualTo: 'approved') // Only fetch approved requests
             .limit(pageSize);
 
         if (lastDocument != null) {
@@ -111,6 +111,7 @@ class PlantedTreesState extends State<PlantedTrees> {
 
         setState(() {
           userPlantRequests.addAll(newRequests);
+          // Sort the entire list after adding new requests
           _sortPlantRequests();
           isLoading = false;
           hasMore = querySnapshot.docs.length >= pageSize;
@@ -238,7 +239,7 @@ class PlantedTreesState extends State<PlantedTrees> {
                 ),
               );
             },
-            child: const Text('Plant Tree'),
+            child: const Text('PLANT TREE'),
           ),
         ],
       ),
@@ -257,6 +258,8 @@ class PlantedTreesState extends State<PlantedTrees> {
   }
 
   Widget _buildTreeCard(Map<String, dynamic> request) {
+    final bool isApproved = request['plantingStatus'] == 'approved';
+
     return Card(
       color: const Color(0xFFFEFEFE),
       margin: const EdgeInsets.only(bottom: 24),
@@ -322,11 +325,11 @@ class PlantedTreesState extends State<PlantedTrees> {
                     ],
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    'Planting Status: Approved',
+                  Text(
+                    'Planting Status: ${request['plantingStatus']}',
                     style: TextStyle(
                       fontSize: 12,
-                      color: Colors.green,
+                      color: isApproved ? Colors.green : Colors.orange,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -334,25 +337,28 @@ class PlantedTreesState extends State<PlantedTrees> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () {
-                        final lat = request['locationLat'];
-                        final lng = request['locationLong'];
-                        if (lat != null && lng != null) {
-                          _launchMaps(lat, lng);
-                        } else {
-                          _showToast('Location not available');
-                        }
-                      },
+                      onPressed: isApproved
+                          ? () {
+                              final lat = request['locationLat'];
+                              final lng = request['locationLong'];
+                              if (lat != null && lng != null) {
+                                _launchMaps(lat, lng);
+                              } else {
+                                _showToast('Location not available');
+                              }
+                            }
+                          : null, // Button is disabled when not approved
                       style: ElevatedButton.styleFrom(
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(4),
                         ),
                         backgroundColor: const Color(0xFF08DAD6),
+                        disabledBackgroundColor: Colors.grey,
                       ),
-                      child: const Text(
+                      child: Text(
                         "VIEW WHERE",
                         style: TextStyle(
-                          color: Colors.black,
+                          color: isApproved ? Colors.black : Colors.white54,
                         ),
                       ),
                     ),

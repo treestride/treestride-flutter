@@ -282,7 +282,7 @@ class ProfileState extends State<Profile> {
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const Home(),
+                  builder: (context) => const Environmentalist(),
                 ),
               );
             },
@@ -297,7 +297,7 @@ class ProfileState extends State<Profile> {
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const Home(),
+                        builder: (context) => const Environmentalist(),
                       ),
                     );
                   },
@@ -400,7 +400,7 @@ class ProfileState extends State<Profile> {
                         Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const Home(),
+                            builder: (context) => const Environmentalist(),
                           ),
                         );
                       },

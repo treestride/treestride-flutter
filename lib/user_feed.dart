@@ -82,47 +82,116 @@ class UserFeedPageState extends State<UserFeedPage>
   }
 
   Future<void> _likePost(String postId) async {
-    final user = _auth.currentUser;
-    if (user != null) {
-      final postRef = _firestore.collection('posts').doc(postId);
-      final postDoc = await postRef.get();
-      final likes = List<String>.from(postDoc['likes'] ?? []);
+    final currentUserId = _auth.currentUser!.uid;
+    final postRef = _firestore.collection('posts').doc(postId);
 
-      if (likes.contains(user.uid)) {
-        // User has already liked the post, so unlike it
-        likes.remove(user.uid);
-      } else {
-        // User hasn't liked the post, so like it
-        likes.add(user.uid);
-      }
-
-      await postRef.update({'likes': likes});
-      setState(() {
-        // Update the local post data
-        final index = _posts.indexWhere((post) => post.id == postId);
-        if (index != -1) {
-          _posts[index] = postDoc;
+    try {
+      await _firestore.runTransaction((transaction) async {
+        final postSnapshot = await transaction.get(postRef);
+        if (!postSnapshot.exists) {
+          throw Exception('Post does not exist!');
         }
+
+        final postData = postSnapshot.data() as Map<String, dynamic>;
+        final List<String> likes = List<String>.from(postData['likes'] ?? []);
+
+        if (postData['userId'] == currentUserId) {
+          // User is trying to like their own post
+          _showToast('You cannot like your own post');
+
+          return;
+        }
+
+        if (likes.contains(currentUserId)) {
+          // User has already liked the post, so unlike it
+          likes.remove(currentUserId);
+        } else {
+          // User hasn't liked the post, so add the like
+          likes.add(currentUserId);
+        }
+
+        transaction.update(postRef, {'likes': likes});
       });
+
+      // Refresh the posts to reflect the updated like status
+      setState(() {
+        _posts.clear();
+        _lastDocument = null;
+      });
+      await _loadPosts();
+    } catch (e) {
+      _showErrorToast('Error updating like: $e');
     }
   }
 
   Future<void> _reportPost(String postId) async {
+    final currentUser = _auth.currentUser!;
+    final currentUserId = currentUser.uid;
     final postRef = _firestore.collection('posts').doc(postId);
-    final postDoc = await postRef.get();
-    final postData = postDoc.data() as Map<String, dynamic>;
 
-    await _firestore.collection('reported_posts').add({
-      'postId': postId,
-      'content': postData['text'],
-      'imageUrl': postData['imageUrl'],
-      'reportedAt': FieldValue.serverTimestamp(),
-      'reportedBy': _auth.currentUser!.uid,
-    });
+    try {
+      // Fetch the current user's data to get the username
+      final userDoc =
+          await _firestore.collection('users').doc(currentUserId).get();
+      final userData = userDoc.data() as Map<String, dynamic>;
+      final username = userData['lowercaseUsername'] as String?;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Post reported successfully')),
-    );
+      if (username == null) {
+        throw Exception('Username not found for the current user');
+      }
+
+      // Check if the user has already reported this post
+      final existingReportQuery = await _firestore
+          .collection('reported_posts')
+          .where('postId', isEqualTo: postId)
+          .where('reportedBy', isEqualTo: username)
+          .get();
+
+      if (existingReportQuery.docs.isNotEmpty) {
+        _showToast('You have already reported this post');
+        return;
+      }
+
+      await _firestore.runTransaction((transaction) async {
+        final postSnapshot = await transaction.get(postRef);
+        if (!postSnapshot.exists) {
+          throw Exception('Post does not exist!');
+        }
+
+        final postData = postSnapshot.data() as Map<String, dynamic>;
+        final List<String> reportedBy =
+            List<String>.from(postData['reportedBy'] ?? []);
+
+        if (reportedBy.contains(currentUserId)) {
+          _showToast('You have already reported this post');
+          return;
+        }
+
+        reportedBy.add(currentUserId);
+
+        transaction.update(postRef, {'reportedBy': reportedBy});
+
+        // Add to reported_posts collection using username
+        await _firestore.collection('reported_posts').add({
+          'postId': postId,
+          'content': postData['text'],
+          'imageUrl': postData['imageUrl'],
+          'reportedAt': FieldValue.serverTimestamp(),
+          'reportedBy': username,
+        });
+      });
+
+      _showToast('Post reported successfully');
+
+      // Refresh the posts to reflect the updated report status
+      setState(() {
+        _posts.clear();
+        _lastDocument = null;
+      });
+      await _loadPosts();
+    } catch (e) {
+      _showErrorToast('Error reporting post: $e');
+    }
   }
 
   Future<void> _postViewed() async {
@@ -626,6 +695,26 @@ class UserFeedPageState extends State<UserFeedPage>
     }
   }
 
+  void _showToast(String message) {
+    Fluttertoast.showToast(
+      msg: message,
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+      backgroundColor: Colors.black,
+      textColor: Colors.white,
+    );
+  }
+
+  void _showErrorToast(String message) {
+    Fluttertoast.showToast(
+      msg: message,
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+      backgroundColor: const Color(0xFFB43838),
+      textColor: Colors.white,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -644,7 +733,7 @@ class UserFeedPageState extends State<UserFeedPage>
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (context) => const Home(),
+              builder: (context) => const Environmentalist(),
             ),
           );
         },
@@ -660,7 +749,7 @@ class UserFeedPageState extends State<UserFeedPage>
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const Home(),
+                    builder: (context) => const Environmentalist(),
                   ),
                 );
               },
@@ -732,7 +821,7 @@ class UserFeedPageState extends State<UserFeedPage>
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const Home(),
+                        builder: (context) => const Environmentalist(),
                       ),
                     );
                   },

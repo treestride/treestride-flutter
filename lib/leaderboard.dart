@@ -83,7 +83,7 @@ class LeaderboardHomeState extends State<LeaderboardHome> {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (context) => const Home(),
+              builder: (context) => const Environmentalist(),
             ),
           );
         },
@@ -98,7 +98,7 @@ class LeaderboardHomeState extends State<LeaderboardHome> {
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const Home(),
+                    builder: (context) => const Environmentalist(),
                   ),
                 );
               },
@@ -186,7 +186,7 @@ class LeaderboardHomeState extends State<LeaderboardHome> {
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const Home(),
+                        builder: (context) => const Environmentalist(),
                       ),
                     );
                   },

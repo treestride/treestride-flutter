@@ -8,7 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:open_mail_app/open_mail_app.dart';
-import 'environmentalist.dart';
+import 'choose_mode.dart';
 import 'offline.dart';
 
 class EmailVerificationPage extends StatefulWidget {
@@ -79,7 +79,7 @@ class EmailVerificationPageState extends State<EmailVerificationPage>
       );
       Future.delayed(Duration.zero, () {
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const Home()),
+          MaterialPageRoute(builder: (_) => const ChooseMode()),
         );
       });
     } else {
