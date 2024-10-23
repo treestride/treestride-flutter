@@ -183,8 +183,8 @@ class RunningCounterHomeState extends State<RunningCounterHome>
         magnitude - _lastMagnitude > 1.4) {
       setState(() {
         _runningSteps++;
+        _updateRunningSteps(_runningSteps);
       });
-      _updateRunningSteps(_runningSteps);
       _lastStepTime = currentTime;
 
       // Check goal completion after each step

@@ -78,12 +78,27 @@ class FitnessState extends State<FitnessMode> {
     return true;
   }
 
-  void _navigateWithConnectivityCheck(Widget destination) async {
+  void _navigateToEnvironmentalist() async {
     if (await _checkConnection()) {
       if (mounted) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => destination),
+          MaterialPageRoute(builder: (context) => const Environmentalist()),
+        );
+      }
+    }
+  }
+
+  void _navigateToAnnouncements() async {
+    if (await _checkConnection()) {
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const AnnouncementPage(
+              previousPage: Fitness(),
+            ),
+          ),
         );
       }
     }
@@ -186,9 +201,7 @@ class FitnessState extends State<FitnessMode> {
                   ),
                   onPressed: () {
                     Navigator.of(context).pop();
-                    _navigateWithConnectivityCheck(
-                      const Environmentalist(),
-                    );
+                    _navigateToEnvironmentalist();
                   },
                   child: const Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
@@ -353,13 +366,7 @@ class FitnessState extends State<FitnessMode> {
                 Stack(
                   children: [
                     IconButton(
-                      onPressed: () {
-                        _navigateWithConnectivityCheck(
-                          const AnnouncementPage(
-                            previousPage: Fitness(),
-                          ),
-                        );
-                      },
+                      onPressed: () => _navigateToAnnouncements(),
                       icon: const Icon(Icons.notifications_active_outlined),
                     ),
                     if (userDataProvider.unreadAnnouncements != '0')

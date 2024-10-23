@@ -183,8 +183,8 @@ class WalkingCounterHomeState extends State<WalkingCounterHome>
         magnitude - _lastMagnitude > 1.4) {
       setState(() {
         _walkingSteps++;
+        _updateWalkingSteps(_walkingSteps);
       });
-      _updateWalkingSteps(_walkingSteps);
       _lastStepTime = currentTime;
 
       // Check goal completion after each step
