@@ -251,7 +251,7 @@ class CreateEditPostPageState extends State<CreateEditPostPage> {
                     children: [
                       TextField(
                         controller: _textController,
-                        maxLines: 6,
+                        maxLines: 5,
                         cursorColor: const Color(0xFF08DAD6),
                         decoration: InputDecoration(
                           hintText: 'Have an update?',

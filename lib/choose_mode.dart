@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 
 import 'fitness.dart';
@@ -57,9 +58,9 @@ class _ChooseModeState extends State<ChooseModeHome> {
 
     _connectivityStream = Connectivity().onConnectivityChanged;
     _checkConnection();
-    //_requestPermissions();
+    _requestPermissions();
   }
-/*
+
   Future<void> _requestPermissions() async {
     await [
       Permission.storage,
@@ -67,7 +68,6 @@ class _ChooseModeState extends State<ChooseModeHome> {
       Permission.camera
     ].request();
   }
-*/
 
   Future<void> _checkConnection() async {
     _connectivityStream.listen((List<ConnectivityResult> results) {

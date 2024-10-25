@@ -68,10 +68,19 @@ class EnduranceWorkoutPlan extends StatelessWidget {
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.only(bottom: 14, left: 14, right: 14),
+        padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: Image.asset(
+                fit: BoxFit.cover,
+                "assets/images/endurance.jpg",
+                width: double.infinity,
+                height: 200,
+              ),
+            ),
             const Padding(
               padding: EdgeInsets.all(14.0),
               child: Text(

@@ -396,20 +396,6 @@ class RunningCounterHomeStateFitness extends State<RunningCounterHomeFitness>
                 fontWeight: FontWeight.bold,
               ),
             ),
-            actions: [
-              IconButton(
-                onPressed: () => {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => StepHistoryPage(
-                          runningStepHistory: _runningStepHistory),
-                    ),
-                  ),
-                },
-                icon: const Icon(Icons.history),
-              ),
-            ],
           ),
           body: Center(
             child: SingleChildScrollView(
@@ -744,83 +730,5 @@ class RunningCounterHomeStateFitness extends State<RunningCounterHomeFitness>
     });
     _saveDataToLocalStorage();
     _showToast("Goal Reset!");
-  }
-}
-
-class StepHistoryPage extends StatelessWidget {
-  final Map<String, int> runningStepHistory;
-
-  const StepHistoryPage({super.key, required this.runningStepHistory});
-
-  @override
-  Widget build(BuildContext context) {
-    List<MapEntry<String, int>> sortedEntries = runningStepHistory.entries
-        .toList()
-      ..sort((a, b) => b.key.compareTo(a.key));
-
-    return Scaffold(
-      backgroundColor: const Color(0xFFEFEFEF),
-      appBar: AppBar(
-        elevation: 2.0,
-        backgroundColor: const Color(0xFFFEFEFE),
-        shadowColor: Colors.grey.withOpacity(0.5),
-        leading: IconButton(
-          onPressed: () {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const RunningCounterFitness(),
-              ),
-            );
-          },
-          icon: const Icon(
-            Icons.arrow_back,
-          ),
-          iconSize: 24,
-        ),
-        centerTitle: true,
-        title: const Text(
-          'RUNNING HISTORY',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(24),
-        itemCount: sortedEntries.length,
-        itemBuilder: (context, index) {
-          final entry = sortedEntries[index];
-          return Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFEFEFE),
-              borderRadius: BorderRadius.circular(4),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0xFFD4D4D4),
-                  blurRadius: 2,
-                  blurStyle: BlurStyle.outer,
-                )
-              ],
-            ),
-            child: ListTile(
-              title: Text(
-                DateFormat('MMMM d, yyyy').format(
-                  DateTime.parse(entry.key),
-                ),
-              ),
-              trailing: Text(
-                '${entry.value} steps',
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
   }
 }
