@@ -124,7 +124,56 @@ class UserFeedPageState extends State<UserFeedPage>
     }
   }
 
-  Future<void> _reportPost(String postId) async {
+  void _showReportConfirmation(String postId) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text(
+          textAlign: TextAlign.center,
+          'Report Post',
+          style: TextStyle(
+            fontSize: 24,
+            color: Colors.black,
+          ),
+        ),
+        content: const Text(
+          textAlign: TextAlign.center,
+          'Are you sure you want to report this post? This action cannot be undone.',
+        ),
+        actionsAlignment: MainAxisAlignment.spaceAround,
+        actions: [
+          TextButton(
+            child: const Text(
+              'Cancel',
+              style: TextStyle(
+                color: Colors.black,
+              ),
+            ),
+            onPressed: () => Navigator.pop(context),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFB43838),
+              foregroundColor: const Color(0xFFB43838),
+              surfaceTintColor: const Color(0xFFB43838),
+            ),
+            child: const Text(
+              'Report',
+              style: TextStyle(
+                color: Colors.white,
+              ),
+            ),
+            onPressed: () {
+              Navigator.pop(context);
+              _processReport(postId);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _processReport(String postId) async {
     final currentUser = _auth.currentUser!;
     final currentUserId = currentUser.uid;
     final postRef = _firestore.collection('posts').doc(postId);
@@ -148,7 +197,7 @@ class UserFeedPageState extends State<UserFeedPage>
           .get();
 
       if (existingReportQuery.docs.isNotEmpty) {
-        _showToast('You have already reported this post');
+        _showToast('You have already reported this post!');
         return;
       }
 
@@ -163,7 +212,7 @@ class UserFeedPageState extends State<UserFeedPage>
             List<String>.from(postData['reportedBy'] ?? []);
 
         if (reportedBy.contains(currentUserId)) {
-          _showToast('You have already reported this post');
+          _showToast('You have already reported this post!');
           return;
         }
 
@@ -178,6 +227,9 @@ class UserFeedPageState extends State<UserFeedPage>
           'imageUrl': postData['imageUrl'],
           'reportedAt': FieldValue.serverTimestamp(),
           'reportedBy': username,
+          'posterId': postData['userId'],
+          'posterUsername': postData['username'],
+          'posterPhotoURL': postData['photoURL'],
         });
       });
 
@@ -457,7 +509,7 @@ class UserFeedPageState extends State<UserFeedPage>
               if (!isCurrentUserPost)
                 IconButton(
                   icon: const Icon(Icons.flag),
-                  onPressed: () => _reportPost(post.id),
+                  onPressed: () => _showReportConfirmation(post.id),
                 ),
             ],
           ),

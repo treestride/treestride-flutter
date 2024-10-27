@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
@@ -138,6 +139,38 @@ class RegisterPageState extends State<Register> {
     var bytes = utf8.encode(password); // Convert the password to bytes
     var digest = sha256.convert(bytes); // Hash the bytes
     return digest.toString(); // Return the hashed password as a string
+  }
+
+  String? _validatePhoneNumber(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Please enter your phone number';
+    }
+
+    // Remove any whitespace from the phone number
+    String cleanNumber = value.replaceAll(RegExp(r'\s+'), '');
+
+    // Check for the "+639" format
+    if (cleanNumber.startsWith('+639')) {
+      if (cleanNumber.length != 13) {
+        return 'Phone number must be 13 digits long with +639';
+      }
+      if (!RegExp(r'^\+639\d{9}$').hasMatch(cleanNumber)) {
+        return 'Invalid Philippine phone number format';
+      }
+    }
+    // Check for the "09" format
+    else if (cleanNumber.startsWith('09')) {
+      if (cleanNumber.length != 11) {
+        return 'Phone number must be 11 digits long';
+      }
+      if (!RegExp(r'^09\d{9}$').hasMatch(cleanNumber)) {
+        return 'Invalid Philippine phone number format';
+      }
+    } else {
+      return 'Phone number must start with 09 or +639';
+    }
+
+    return null;
   }
 
   void _register() async {
@@ -403,10 +436,15 @@ class RegisterPageState extends State<Register> {
                       TextFormField(
                         decoration: _inputDecoration('Phone Number'),
                         keyboardType: TextInputType.phone,
-                        validator: (value) => value == null || value.isEmpty
-                            ? 'Please enter your phone number'
-                            : null,
+                        validator: _validatePhoneNumber,
                         onChanged: (value) => _phoneNumber = value,
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(
+                              RegExp(r'[0-9+]')), // Only allow digits and +
+                          LengthLimitingTextInputFormatter(
+                              13), // Limit max length to 13 characters
+                        ],
                       ),
                       const SizedBox(height: 14),
                       TextFormField(
