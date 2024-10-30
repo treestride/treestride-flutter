@@ -1,8 +1,8 @@
 // ignore_for_file: use_build_context_synchronously
 
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
@@ -21,10 +21,6 @@ import 'package:provider/provider.dart';
 import 'package:treestride/offline.dart';
 
 import 'create_edit.dart';
-import 'environmentalist.dart';
-import 'leaderboard.dart';
-import 'plant_tree.dart';
-import 'profile.dart';
 import 'user_data_provider.dart';
 
 class UserFeedPage extends StatefulWidget {
@@ -53,12 +49,26 @@ class UserFeedPageState extends State<UserFeedPage>
     _checkConnection();
     _loadPosts();
     _postViewed();
+    // Listen to user data changes
+    Provider.of<UserDataProvider>(context, listen: false)
+        .addListener(_onUserDataChanged);
   }
 
   @override
   void dispose() {
+    Provider.of<UserDataProvider>(context, listen: false)
+        .removeListener(_onUserDataChanged);
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  void _onUserDataChanged() {
+    // Refresh posts when user data changes
+    setState(() {
+      _posts.clear();
+      _lastDocument = null;
+    });
+    _loadPosts();
   }
 
   @override
@@ -189,6 +199,21 @@ class UserFeedPageState extends State<UserFeedPage>
         throw Exception('Username not found for the current user');
       }
 
+      // First check if the post exists and if it's already been reported
+      final postDoc = await postRef.get();
+      if (!postDoc.exists) {
+        _showToast('This post no longer exists!');
+        return;
+      }
+
+      final postData = postDoc.data() as Map<String, dynamic>;
+
+      // Check if post has already been reported and processed
+      if (postData['isReported'] == true) {
+        _showToast('This post has already been reported!');
+        return;
+      }
+
       // Check if the user has already reported this post
       final existingReportQuery = await _firestore
           .collection('reported_posts')
@@ -201,39 +226,38 @@ class UserFeedPageState extends State<UserFeedPage>
         return;
       }
 
+      // Perform the report operation in a transaction
       await _firestore.runTransaction((transaction) async {
-        final postSnapshot = await transaction.get(postRef);
-        if (!postSnapshot.exists) {
-          throw Exception('Post does not exist!');
+        final freshPostSnapshot = await transaction.get(postRef);
+        final freshPostData = freshPostSnapshot.data() as Map<String, dynamic>;
+
+        // Double check if post hasn't been reported during our operation
+        if (freshPostData['isReported'] == true) {
+          throw Exception('Post was already reported!');
         }
 
-        final postData = postSnapshot.data() as Map<String, dynamic>;
-        final List<String> reportedBy =
-            List<String>.from(postData['reportedBy'] ?? []);
-
-        if (reportedBy.contains(currentUserId)) {
-          _showToast('You have already reported this post!');
-          return;
-        }
-
-        reportedBy.add(currentUserId);
-
-        transaction.update(postRef, {'reportedBy': reportedBy});
-
-        // Add to reported_posts collection using username
-        await _firestore.collection('reported_posts').add({
+        // Add to reported_posts collection
+        final reportDoc = _firestore.collection('reported_posts').doc();
+        transaction.set(reportDoc, {
           'postId': postId,
-          'content': postData['text'],
-          'imageUrl': postData['imageUrl'],
+          'content': freshPostData['text'],
+          'imageUrl': freshPostData['imageUrl'],
           'reportedAt': FieldValue.serverTimestamp(),
           'reportedBy': username,
-          'posterId': postData['userId'],
-          'posterUsername': postData['username'],
-          'posterPhotoURL': postData['photoURL'],
+          'posterId': freshPostData['userId'],
+          'posterUsername': freshPostData['username'],
+          'posterPhotoURL': freshPostData['photoURL'],
+        });
+
+        // Update the post to mark it as reported
+        transaction.update(postRef, {
+          'isReported': true,
+          'reportedAt': FieldValue.serverTimestamp(),
+          'reportedBy': username,
         });
       });
 
-      _showToast('Post reported successfully');
+      _showToast('Post reported successfully!');
 
       // Refresh the posts to reflect the updated report status
       setState(() {
@@ -242,7 +266,11 @@ class UserFeedPageState extends State<UserFeedPage>
       });
       await _loadPosts();
     } catch (e) {
-      _showErrorToast('Error reporting post: $e');
+      if (e.toString().contains('Post was already reported!')) {
+        _showToast('This post has already been reported!');
+      } else {
+        _showErrorToast('Error reporting post: $e');
+      }
     }
   }
 
@@ -320,7 +348,8 @@ class UserFeedPageState extends State<UserFeedPage>
       'text': text,
       'imageUrl': imageUrl,
       'timestamp': FieldValue.serverTimestamp(),
-      'likes': [], // Initialize empty likes array
+      'isReported': false,
+      'likes': [],
     });
 
     // Refresh the feed
@@ -780,14 +809,57 @@ class UserFeedPageState extends State<UserFeedPage>
       ),
       home: PopScope(
         canPop: false,
-        onPopInvoked: (didPop) async {
-          _postViewed();
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const Environmentalist(),
-            ),
-          );
+        onPopInvoked: (didPop) {
+          try {
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: const Text(
+                    textAlign: TextAlign.center,
+                    'Close TreeStride?',
+                    style: TextStyle(
+                      fontSize: 24,
+                      color: Colors.black,
+                    ),
+                  ),
+                  actionsAlignment: MainAxisAlignment.spaceAround,
+                  actions: <Widget>[
+                    TextButton(
+                      style: TextButton.styleFrom(
+                        foregroundColor: const Color(0xFF08DAD6),
+                        surfaceTintColor: const Color(0xFF08DAD6),
+                      ),
+                      child: const Text(
+                        'Stay',
+                        style: TextStyle(
+                          color: Colors.black,
+                        ),
+                      ),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                    TextButton(
+                      style: TextButton.styleFrom(
+                        foregroundColor: const Color(0xFF08DAD6),
+                        surfaceTintColor: const Color(0xFF08DAD6),
+                      ),
+                      child: const Text(
+                        'Close',
+                        style: TextStyle(
+                          color: Colors.black,
+                        ),
+                      ),
+                      onPressed: () {
+                        SystemNavigator.pop();
+                      },
+                    ),
+                  ],
+                );
+              },
+            );
+          } catch (error) {
+            _showErrorToast("Closing Error: $error");
+          }
         },
         child: Scaffold(
           backgroundColor: const Color(0xFFEFEFEF),
@@ -795,21 +867,6 @@ class UserFeedPageState extends State<UserFeedPage>
             elevation: 2.0,
             backgroundColor: const Color(0xFFFEFEFE),
             shadowColor: Colors.grey.withOpacity(0.5),
-            leading: IconButton(
-              onPressed: () {
-                _postViewed();
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const Environmentalist(),
-                  ),
-                );
-              },
-              icon: const Icon(
-                Icons.arrow_back,
-              ),
-              iconSize: 24,
-            ),
             centerTitle: true,
             title: const Text(
               'TREESTRIDE',
@@ -824,96 +881,6 @@ class UserFeedPageState extends State<UserFeedPage>
                 icon: const Icon(Icons.edit_document),
               )
             ],
-          ),
-          bottomNavigationBar: Container(
-            padding: const EdgeInsets.symmetric(vertical: 10.0),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFEFEFE),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.3),
-                  spreadRadius: 1,
-                  blurRadius: 2,
-                  offset: const Offset(0, -1),
-                ),
-              ],
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: <Widget>[
-                Stack(
-                  children: [
-                    GestureDetector(
-                      onTap: () {},
-                      child: const Icon(
-                        Icons.view_agenda_outlined,
-                        size: 30,
-                      ),
-                    ),
-                  ],
-                ),
-                GestureDetector(
-                  onTap: () {
-                    _postViewed();
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const Leaderboard(),
-                      ),
-                    );
-                  },
-                  child: const Icon(
-                    Icons.emoji_events_outlined,
-                    size: 30,
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () {
-                    _postViewed();
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const Environmentalist(),
-                      ),
-                    );
-                  },
-                  child: const Icon(
-                    Icons.directions_walk_outlined,
-                    size: 30,
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () {
-                    _postViewed();
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const TreeShop(),
-                      ),
-                    );
-                  },
-                  child: const Icon(
-                    Icons.park_outlined,
-                    size: 30,
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () {
-                    _postViewed();
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const Profile(),
-                      ),
-                    );
-                  },
-                  child: const Icon(
-                    Icons.perm_identity_outlined,
-                    size: 30,
-                  ),
-                ),
-              ],
-            ),
           ),
           body: _isLoading && _posts.isEmpty
               ? const Center(
@@ -954,9 +921,9 @@ class UserFeedPageState extends State<UserFeedPage>
                       },
                       child: ListView.builder(
                         padding: const EdgeInsets.only(
-                          top: 24,
-                          left: 24,
-                          right: 24,
+                          top: 14,
+                          left: 14,
+                          right: 14,
                         ),
                         itemCount: _posts.length + (_hasMorePosts ? 1 : 0),
                         itemBuilder: (context, index) {
@@ -964,7 +931,7 @@ class UserFeedPageState extends State<UserFeedPage>
                             return Column(
                               children: [
                                 _buildPostItem(_posts[index]),
-                                const SizedBox(height: 24)
+                                const SizedBox(height: 14)
                               ],
                             );
                           } else if (_isLoading) {
@@ -976,7 +943,7 @@ class UserFeedPageState extends State<UserFeedPage>
                                     strokeWidth: 6.0,
                                   ),
                                 ),
-                                SizedBox(height: 24)
+                                SizedBox(height: 14)
                               ],
                             );
                           } else {
@@ -994,7 +961,7 @@ class UserFeedPageState extends State<UserFeedPage>
                                     ),
                                   ),
                                 ),
-                                const SizedBox(height: 24)
+                                const SizedBox(height: 14)
                               ],
                             );
                           }

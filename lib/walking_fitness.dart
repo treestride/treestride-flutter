@@ -403,7 +403,7 @@ class WalkingCounterHomeStateFitness extends State<WalkingCounterHomeFitness>
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(24),
+                    padding: const EdgeInsets.all(14),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -464,7 +464,7 @@ class WalkingCounterHomeStateFitness extends State<WalkingCounterHomeFitness>
                             ],
                           ),
                         ),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 14),
                         Image.asset(
                           "assets/images/walking.png",
                           height: 48,

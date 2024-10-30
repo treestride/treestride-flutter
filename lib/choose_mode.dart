@@ -51,11 +51,9 @@ class _ChooseModeState extends State<ChooseModeHome> {
   @override
   void initState() {
     super.initState();
-
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeApp();
     });
-
     _connectivityStream = Connectivity().onConnectivityChanged;
     _checkConnection();
     _requestPermissions();

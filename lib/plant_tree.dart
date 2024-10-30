@@ -4,19 +4,15 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:treestride/user_data_provider.dart';
 
 import 'offline.dart';
-import 'user_feed.dart';
 import 'certificate.dart';
-import 'environmentalist.dart';
-import 'leaderboard.dart';
-import 'profile.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -33,17 +29,7 @@ class TreeShop extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      theme: ThemeData(
-        textTheme: GoogleFonts.exo2TextTheme(
-          Theme.of(context).textTheme,
-        ),
-        primaryTextTheme: GoogleFonts.exoTextTheme(
-          Theme.of(context).primaryTextTheme,
-        ),
-      ),
-      home: const TreeShopHome(),
-    );
+    return const TreeShopHome();
   }
 }
 
@@ -363,33 +349,64 @@ class TreeShopHomeState extends State<TreeShopHome> {
         return PopScope(
           canPop: false,
           onPopInvoked: (didPop) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const Environmentalist(),
-              ),
-            );
+            try {
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: const Text(
+                      textAlign: TextAlign.center,
+                      'Close TreeStride?',
+                      style: TextStyle(
+                        fontSize: 24,
+                        color: Colors.black,
+                      ),
+                    ),
+                    actionsAlignment: MainAxisAlignment.spaceAround,
+                    actions: <Widget>[
+                      TextButton(
+                        style: TextButton.styleFrom(
+                          foregroundColor: const Color(0xFF08DAD6),
+                          surfaceTintColor: const Color(0xFF08DAD6),
+                        ),
+                        child: const Text(
+                          'Stay',
+                          style: TextStyle(
+                            color: Colors.black,
+                          ),
+                        ),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                      TextButton(
+                        style: TextButton.styleFrom(
+                          foregroundColor: const Color(0xFF08DAD6),
+                          surfaceTintColor: const Color(0xFF08DAD6),
+                        ),
+                        child: const Text(
+                          'Close',
+                          style: TextStyle(
+                            color: Colors.black,
+                          ),
+                        ),
+                        onPressed: () {
+                          SystemNavigator.pop();
+                        },
+                      ),
+                    ],
+                  );
+                },
+              );
+            } catch (error) {
+              _showToast("Closing Error: $error");
+            }
           },
           child: Scaffold(
             backgroundColor: const Color(0xFFEFEFEF),
             appBar: AppBar(
               elevation: 2.0,
+              automaticallyImplyLeading: false,
               backgroundColor: const Color(0xFFFEFEFE),
               shadowColor: Colors.grey.withOpacity(0.5),
-              leading: IconButton(
-                onPressed: () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const Environmentalist(),
-                    ),
-                  );
-                },
-                icon: const Icon(
-                  Icons.arrow_back,
-                ),
-                iconSize: 24,
-              ),
               centerTitle: true,
               title: const Text(
                 'PLANT TREE',
@@ -397,116 +414,6 @@ class TreeShopHomeState extends State<TreeShopHome> {
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                 ),
-              ),
-            ),
-            bottomNavigationBar: Container(
-              padding: const EdgeInsets.symmetric(vertical: 10.0),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFEFEFE),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.3),
-                    spreadRadius: 1,
-                    blurRadius: 2,
-                    offset: const Offset(0, -1),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: <Widget>[
-                  Stack(
-                    children: [
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const UserFeedPage(),
-                            ),
-                          );
-                        },
-                        child: const Icon(
-                          Icons.view_agenda_outlined,
-                          size: 30,
-                        ),
-                      ),
-                      if (userDataProvider.unreadPosts != '0')
-                        Positioned(
-                          right: 0,
-                          top: 0,
-                          child: Container(
-                            padding: const EdgeInsets.all(2),
-                            decoration: BoxDecoration(
-                              color: Colors.red,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            constraints: const BoxConstraints(
-                              minWidth: 16,
-                              minHeight: 16,
-                            ),
-                            child: Text(
-                              userDataProvider.unreadPosts,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 10,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const Leaderboard(),
-                        ),
-                      );
-                    },
-                    child: const Icon(
-                      Icons.emoji_events_outlined,
-                      size: 30,
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const Environmentalist(),
-                        ),
-                      );
-                    },
-                    child: const Icon(
-                      Icons.directions_walk_outlined,
-                      size: 30,
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () {},
-                    child: const Icon(
-                      Icons.park_outlined,
-                      size: 30,
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const Profile(),
-                        ),
-                      );
-                    },
-                    child: const Icon(
-                      Icons.perm_identity_outlined,
-                      size: 30,
-                    ),
-                  ),
-                ],
               ),
             ),
             body: userDataProvider.userData == null
@@ -615,7 +522,7 @@ class TreeShopHomeState extends State<TreeShopHome> {
     return Column(
       children: [
         Container(
-          margin: const EdgeInsets.only(left: 24, right: 24),
+          margin: const EdgeInsets.only(left: 14, right: 14),
           decoration: BoxDecoration(
             color: const Color(0xFFFEFEFE),
             borderRadius: BorderRadius.circular(4),
@@ -696,7 +603,7 @@ class TreeShopHomeState extends State<TreeShopHome> {
             ),
           ),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 14),
       ],
     );
   }

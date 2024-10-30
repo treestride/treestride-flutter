@@ -403,7 +403,7 @@ class RunningCounterHomeStateFitness extends State<RunningCounterHomeFitness>
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(24),
+                    padding: const EdgeInsets.all(14),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -464,7 +464,7 @@ class RunningCounterHomeStateFitness extends State<RunningCounterHomeFitness>
                             ],
                           ),
                         ),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 14),
                         Image.asset(
                           "assets/images/running.png",
                           height: 48,

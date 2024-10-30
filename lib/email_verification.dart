@@ -146,12 +146,12 @@ class EmailVerificationPageState extends State<EmailVerificationPage>
                   size: 100,
                   color: Color(0xFF08DAD6),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 14),
                 const Text(
                   'VERIFY YOUR EMAIL',
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 14),
                 const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 32.0),
                   child: Text(
@@ -160,7 +160,7 @@ class EmailVerificationPageState extends State<EmailVerificationPage>
                     style: TextStyle(fontSize: 16),
                   ),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 14),
                 ElevatedButton.icon(
                   onPressed: _launchEmailApp,
                   icon: const Icon(Icons.email),

@@ -101,7 +101,7 @@ class RegisterPageState extends State<Register> {
       sourcePath: imageFile.path,
       uiSettings: [
         AndroidUiSettings(
-          toolbarTitle: 'Crop Profile Picture',
+          toolbarTitle: 'CROP PICTURE',
           toolbarColor: const Color(0xFF08DAD6),
           toolbarWidgetColor: Colors.white,
           initAspectRatio: CropAspectRatioPreset.square,
@@ -394,7 +394,7 @@ class RegisterPageState extends State<Register> {
           children: [
             SingleChildScrollView(
               child: Padding(
-                padding: const EdgeInsets.all(24.0),
+                padding: const EdgeInsets.all(14.0),
                 child: Form(
                   key: _formKey,
                   child: Column(

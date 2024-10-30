@@ -132,11 +132,11 @@ class CreateEditPostPageState extends State<CreateEditPostPage> {
       context: context,
       backgroundColor: const Color(0xFFFEFEFE),
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(14)),
       ),
       builder: (BuildContext context) {
         return Container(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(14),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -144,7 +144,7 @@ class CreateEditPostPageState extends State<CreateEditPostPage> {
                 'Choose Image Source',
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 14),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
@@ -232,7 +232,7 @@ class CreateEditPostPageState extends State<CreateEditPostPage> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                margin: const EdgeInsets.all(24),
+                margin: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFEFEFE),
                   borderRadius: BorderRadius.circular(4),

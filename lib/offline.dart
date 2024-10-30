@@ -26,43 +26,49 @@ class Offline extends StatelessWidget {
             children: [
               const Icon(
                 Icons.wifi_off,
-                size: 120,
+                size: 100,
                 color: Colors.grey,
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 14),
               const Text(
                 'NO INTERNET CONNECTION',
                 style: TextStyle(
                   color: Colors.grey,
-                  fontSize: 18,
+                  fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(4),
+              const SizedBox(height: 14),
+              Column(
+                children: [
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      backgroundColor: const Color(0xFF08DAD6),
+                    ),
+                    onPressed: () async {
+                      var connectivityResult =
+                          await Connectivity().checkConnectivity();
+                      if (!connectivityResult
+                          .contains(ConnectivityResult.none)) {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const Splash()),
+                        );
+                      }
+                    },
+                    child: const Text(
+                      'RETRY',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
-                  backgroundColor: const Color(0xFF08DAD6),
-                ),
-                onPressed: () async {
-                  var connectivityResult =
-                      await Connectivity().checkConnectivity();
-                  if (!connectivityResult.contains(ConnectivityResult.none)) {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (context) => const Splash()),
-                    );
-                  }
-                },
-                child: const Text(
-                  'RETRY',
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                ],
               ),
             ],
           ),

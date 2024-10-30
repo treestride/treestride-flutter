@@ -158,7 +158,7 @@ class ForgotPasswordState extends State<ForgotPassword> {
           children: [
             Center(
               child: Padding(
-                padding: const EdgeInsets.all(24.0),
+                padding: const EdgeInsets.all(14.0),
                 child: Form(
                   key: _formKey,
                   child: Column(
@@ -180,7 +180,7 @@ class ForgotPasswordState extends State<ForgotPassword> {
                           color: Colors.grey,
                         ),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 14),
                       TextFormField(
                         cursorColor: const Color(0xFF08DAD6),
                         keyboardType: TextInputType.emailAddress,

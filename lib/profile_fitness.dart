@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter/services.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'workout.dart';
-import 'fitness.dart';
+import 'edit_profile.dart';
 import 'user_data_provider.dart';
 
 void main() {
@@ -18,17 +18,7 @@ class ProfileFitness extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      theme: ThemeData(
-        textTheme: GoogleFonts.exo2TextTheme(
-          Theme.of(context).textTheme,
-        ),
-        primaryTextTheme: GoogleFonts.exoTextTheme(
-          Theme.of(context).primaryTextTheme,
-        ),
-      ),
-      home: const ProfileFitnessHome(),
-    );
+    return const ProfileFitnessHome();
   }
 }
 
@@ -60,6 +50,28 @@ class ProfileFitnessHomeState extends State<ProfileFitnessHome>
     });
   }
 
+  void _navigateToEditProfile() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const EditProfile(),
+      ),
+    );
+
+    if (!mounted) return;
+    // Refresh data after returning
+    Provider.of<UserDataProvider>(context, listen: false).refreshUserData();
+  }
+
+  void _showErrorToast(String message) {
+    Fluttertoast.showToast(
+      msg: message,
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+      backgroundColor: const Color(0xFFB43838),
+      textColor: Colors.white,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<UserDataProvider>(
@@ -78,34 +90,65 @@ class ProfileFitnessHomeState extends State<ProfileFitnessHome>
 
         return PopScope(
           canPop: false,
-          onPopInvoked: (didPop) async {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const Fitness(),
-              ),
-            );
+          onPopInvoked: (didPop) {
+            try {
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: const Text(
+                      textAlign: TextAlign.center,
+                      'Close TreeStride?',
+                      style: TextStyle(
+                        fontSize: 24,
+                        color: Colors.black,
+                      ),
+                    ),
+                    actionsAlignment: MainAxisAlignment.spaceAround,
+                    actions: <Widget>[
+                      TextButton(
+                        style: TextButton.styleFrom(
+                          foregroundColor: const Color(0xFF08DAD6),
+                          surfaceTintColor: const Color(0xFF08DAD6),
+                        ),
+                        child: const Text(
+                          'Stay',
+                          style: TextStyle(
+                            color: Colors.black,
+                          ),
+                        ),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                      TextButton(
+                        style: TextButton.styleFrom(
+                          foregroundColor: const Color(0xFF08DAD6),
+                          surfaceTintColor: const Color(0xFF08DAD6),
+                        ),
+                        child: const Text(
+                          'Close',
+                          style: TextStyle(
+                            color: Colors.black,
+                          ),
+                        ),
+                        onPressed: () {
+                          SystemNavigator.pop();
+                        },
+                      ),
+                    ],
+                  );
+                },
+              );
+            } catch (error) {
+              _showErrorToast("Closing Error: $error");
+            }
           },
           child: Scaffold(
             backgroundColor: const Color(0xFFEFEFEF),
             appBar: AppBar(
               elevation: 2.0,
+              automaticallyImplyLeading: false,
               backgroundColor: const Color(0xFFFEFEFE),
               shadowColor: Colors.grey.withOpacity(0.5),
-              leading: IconButton(
-                onPressed: () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const Fitness(),
-                    ),
-                  );
-                },
-                icon: const Icon(
-                  Icons.arrow_back,
-                ),
-                iconSize: 24,
-              ),
               centerTitle: true,
               title: const Text(
                 'PROFILE',
@@ -114,65 +157,17 @@ class ProfileFitnessHomeState extends State<ProfileFitnessHome>
                   fontWeight: FontWeight.bold,
                 ),
               ),
-            ),
-            bottomNavigationBar: Container(
-              padding: const EdgeInsets.symmetric(vertical: 10.0),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFEFEFE),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.3),
-                    spreadRadius: 1,
-                    blurRadius: 2,
-                    offset: const Offset(0, -1),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: <Widget>[
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const Workout(),
-                        ),
-                      );
-                    },
-                    child: const Icon(
-                      Icons.fitness_center_outlined,
-                      size: 30,
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const Fitness(),
-                        ),
-                      );
-                    },
-                    child: const Icon(
-                      Icons.directions_walk_outlined,
-                      size: 30,
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () {},
-                    child: const Icon(
-                      Icons.person,
-                      size: 30,
-                    ),
-                  ),
-                ],
-              ),
+              actions: [
+                IconButton(
+                  onPressed: _navigateToEditProfile,
+                  icon: const Icon(Icons.edit),
+                ),
+              ],
             ),
             body: Center(
               child: SingleChildScrollView(
                 child: Padding(
-                  padding: const EdgeInsets.all(24.0),
+                  padding: const EdgeInsets.all(14.0),
                   child: Column(
                     children: [
                       Container(
@@ -234,7 +229,7 @@ class ProfileFitnessHomeState extends State<ProfileFitnessHome>
                           ],
                         ),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 14),
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(14),
@@ -271,7 +266,7 @@ class ProfileFitnessHomeState extends State<ProfileFitnessHome>
                           ],
                         ),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 14),
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(14),
@@ -308,7 +303,7 @@ class ProfileFitnessHomeState extends State<ProfileFitnessHome>
                           ],
                         ),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 14),
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(14),

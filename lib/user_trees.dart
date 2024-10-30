@@ -9,9 +9,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'bottom_navigation.dart';
 import 'offline.dart';
-import 'plant_tree.dart';
-import 'profile.dart';
 
 class PlantedTrees extends StatefulWidget {
   const PlantedTrees({super.key});
@@ -170,7 +169,7 @@ class PlantedTreesState extends State<PlantedTrees> {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (context) => const Profile(),
+              builder: (context) => const TabNavigator(initialIndex: 4),
             ),
           );
         },
@@ -185,7 +184,7 @@ class PlantedTreesState extends State<PlantedTrees> {
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const Profile(),
+                    builder: (context) => const TabNavigator(initialIndex: 4),
                   ),
                 );
               },
@@ -211,35 +210,15 @@ class PlantedTreesState extends State<PlantedTrees> {
   }
 
   Widget _buildEmptyState(BuildContext context) {
-    return Center(
+    return const Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.forest, size: 100, color: Color(0xFFBDBDBD)),
-          const SizedBox(height: 14),
-          const Text(
+          Icon(Icons.forest, size: 100, color: Color(0xFFBDBDBD)),
+          SizedBox(height: 14),
+          Text(
             'NOTHING IS HERE',
             style: TextStyle(fontSize: 20, color: Colors.grey),
-          ),
-          const SizedBox(height: 10),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              backgroundColor: const Color(0xFF08DAD6),
-              foregroundColor: Colors.black,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-            ),
-            onPressed: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const TreeShop(),
-                ),
-              );
-            },
-            child: const Text('PLANT TREE'),
           ),
         ],
       ),
@@ -248,7 +227,7 @@ class PlantedTreesState extends State<PlantedTrees> {
 
   Widget _buildTreeList(List<Map<String, dynamic>> plantRequests) {
     return ListView(
-      padding: const EdgeInsets.only(top: 24, left: 24, right: 24),
+      padding: const EdgeInsets.only(top: 14, left: 14, right: 14),
       children: [
         ...plantRequests.map((request) => _buildTreeCard(request)),
         if (hasMore && !isLoading) _buildLoadMoreButton(),
@@ -262,7 +241,7 @@ class PlantedTreesState extends State<PlantedTrees> {
 
     return Card(
       color: const Color(0xFFFEFEFE),
-      margin: const EdgeInsets.only(bottom: 24),
+      margin: const EdgeInsets.only(bottom: 14),
       elevation: 2,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(4),
@@ -374,7 +353,7 @@ class PlantedTreesState extends State<PlantedTrees> {
 
   Widget _buildLoadMoreButton() {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 24),
+      padding: const EdgeInsets.only(bottom: 14),
       child: Column(
         children: [
           ElevatedButton(

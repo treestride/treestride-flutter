@@ -11,12 +11,11 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'announcements.dart';
-import 'workout.dart';
+import 'bottom_navigation_fitness.dart';
 import 'environmentalist.dart';
 import 'jogging_fitness.dart';
 import 'login.dart';
 import 'offline.dart';
-import 'profile_fitness.dart';
 import 'running_fitness.dart';
 import 'user_data_provider.dart';
 import 'walking_fitness.dart';
@@ -40,8 +39,18 @@ class Fitness extends StatelessWidget {
           Theme.of(context).primaryTextTheme,
         ),
       ),
-      home: const FitnessMode(),
+      home: const FitnessContent(),
     );
+  }
+}
+
+// Create a new FitnessContent widget to hold the main content
+class FitnessContent extends StatelessWidget {
+  const FitnessContent({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const TabNavigatorFitness();
   }
 }
 
@@ -397,63 +406,9 @@ class FitnessState extends State<FitnessMode> {
                 ),
               ],
             ),
-            bottomNavigationBar: Container(
-              padding: const EdgeInsets.symmetric(vertical: 10.0),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFEFEFE),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.3),
-                    spreadRadius: 1,
-                    blurRadius: 2,
-                    offset: const Offset(0, -1),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: <Widget>[
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const Workout(),
-                        ),
-                      );
-                    },
-                    child: const Icon(
-                      Icons.fitness_center_outlined,
-                      size: 30,
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () {},
-                    child: const Icon(
-                      Icons.directions_walk_outlined,
-                      size: 30,
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ProfileFitness(),
-                        ),
-                      );
-                    },
-                    child: const Icon(
-                      Icons.person,
-                      size: 30,
-                    ),
-                  ),
-                ],
-              ),
-            ),
             body: SingleChildScrollView(
               child: Padding(
-                padding: const EdgeInsets.all(24.0),
+                padding: const EdgeInsets.all(14.0),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -493,7 +448,7 @@ class FitnessState extends State<FitnessMode> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 14),
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
@@ -520,7 +475,7 @@ class FitnessState extends State<FitnessMode> {
                           const SizedBox(height: 14),
                           ElevatedButton(
                             onPressed: () {
-                              Navigator.pushReplacement(
+                              Navigator.push(
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) =>
@@ -560,7 +515,7 @@ class FitnessState extends State<FitnessMode> {
                           const SizedBox(height: 14),
                           ElevatedButton(
                             onPressed: () {
-                              Navigator.pushReplacement(
+                              Navigator.push(
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) =>
@@ -600,7 +555,7 @@ class FitnessState extends State<FitnessMode> {
                           const SizedBox(height: 14),
                           ElevatedButton(
                             onPressed: () {
-                              Navigator.pushReplacement(
+                              Navigator.push(
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) =>

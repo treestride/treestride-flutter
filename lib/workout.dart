@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter/services.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 import 'balance_workout.dart';
 import 'bmi_calculator.dart';
 import 'endurance_workout.dart';
-import 'fitness.dart';
 import 'flexibility_workout.dart';
-import 'profile_fitness.dart';
 import 'strength_workout.dart';
 
 void main() {
@@ -19,17 +18,7 @@ class Workout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      theme: ThemeData(
-        textTheme: GoogleFonts.exo2TextTheme(
-          Theme.of(context).textTheme,
-        ),
-        primaryTextTheme: GoogleFonts.exoTextTheme(
-          Theme.of(context).primaryTextTheme,
-        ),
-      ),
-      home: const WorkoutHome(),
-    );
+    return const WorkoutHome();
   }
 }
 
@@ -41,17 +30,71 @@ class WorkoutHome extends StatefulWidget {
 }
 
 class _WorkoutState extends State<WorkoutHome> {
+  void _showErrorToast(String message) {
+    Fluttertoast.showToast(
+      msg: message,
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+      backgroundColor: const Color(0xFFB43838),
+      textColor: Colors.white,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
       onPopInvoked: (didPop) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const Fitness(),
-          ),
-        );
+        try {
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: const Text(
+                  textAlign: TextAlign.center,
+                  'Close TreeStride?',
+                  style: TextStyle(
+                    fontSize: 24,
+                    color: Colors.black,
+                  ),
+                ),
+                actionsAlignment: MainAxisAlignment.spaceAround,
+                actions: <Widget>[
+                  TextButton(
+                    style: TextButton.styleFrom(
+                      foregroundColor: const Color(0xFF08DAD6),
+                      surfaceTintColor: const Color(0xFF08DAD6),
+                    ),
+                    child: const Text(
+                      'Stay',
+                      style: TextStyle(
+                        color: Colors.black,
+                      ),
+                    ),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                  TextButton(
+                    style: TextButton.styleFrom(
+                      foregroundColor: const Color(0xFF08DAD6),
+                      surfaceTintColor: const Color(0xFF08DAD6),
+                    ),
+                    child: const Text(
+                      'Close',
+                      style: TextStyle(
+                        color: Colors.black,
+                      ),
+                    ),
+                    onPressed: () {
+                      SystemNavigator.pop();
+                    },
+                  ),
+                ],
+              );
+            },
+          );
+        } catch (error) {
+          _showErrorToast("Closing Error: $error");
+        }
       },
       child: Scaffold(
         backgroundColor: const Color(0xFFEFEFEF),
@@ -59,20 +102,6 @@ class _WorkoutState extends State<WorkoutHome> {
           elevation: 2.0,
           backgroundColor: const Color(0xFFFEFEFE),
           shadowColor: Colors.grey.withOpacity(0.5),
-          leading: IconButton(
-            onPressed: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const Fitness(),
-                ),
-              );
-            },
-            icon: const Icon(
-              Icons.arrow_back,
-            ),
-            iconSize: 24,
-          ),
           centerTitle: true,
           title: const Text(
             'WORKOUT',
@@ -84,7 +113,7 @@ class _WorkoutState extends State<WorkoutHome> {
           actions: [
             IconButton(
               onPressed: () {
-                Navigator.pushReplacement(
+                Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (context) => const BMI(),
@@ -98,69 +127,15 @@ class _WorkoutState extends State<WorkoutHome> {
             )
           ],
         ),
-        bottomNavigationBar: Container(
-          padding: const EdgeInsets.symmetric(vertical: 10.0),
-          decoration: BoxDecoration(
-            color: const Color(0xFFFEFEFE),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.3),
-                spreadRadius: 1,
-                blurRadius: 2,
-                offset: const Offset(0, -1),
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: <Widget>[
-              GestureDetector(
-                onTap: () {},
-                child: const Icon(
-                  Icons.fitness_center_outlined,
-                  size: 30,
-                ),
-              ),
-              GestureDetector(
-                onTap: () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const Fitness(),
-                    ),
-                  );
-                },
-                child: const Icon(
-                  Icons.directions_walk_outlined,
-                  size: 30,
-                ),
-              ),
-              GestureDetector(
-                onTap: () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const ProfileFitness(),
-                    ),
-                  );
-                },
-                child: const Icon(
-                  Icons.person,
-                  size: 30,
-                ),
-              ),
-            ],
-          ),
-        ),
         body: Center(
           child: SingleChildScrollView(
             child: Padding(
-              padding: const EdgeInsets.all(24.0),
+              padding: const EdgeInsets.all(14.0),
               child: Column(
                 children: [
                   GestureDetector(
                     onTap: () => {
-                      Navigator.pushReplacement(
+                      Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) => const StrengthWorkoutPlan(),
@@ -201,10 +176,10 @@ class _WorkoutState extends State<WorkoutHome> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 14),
                   GestureDetector(
                     onTap: () => {
-                      Navigator.pushReplacement(
+                      Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) => const EnduranceWorkoutPlan(),
@@ -245,10 +220,10 @@ class _WorkoutState extends State<WorkoutHome> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 14),
                   GestureDetector(
                     onTap: () => {
-                      Navigator.pushReplacement(
+                      Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) => const FlexibilityWorkoutPlan(),
@@ -289,10 +264,10 @@ class _WorkoutState extends State<WorkoutHome> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 14),
                   GestureDetector(
                     onTap: () => {
-                      Navigator.pushReplacement(
+                      Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) => const BalanceWorkoutPlan(),

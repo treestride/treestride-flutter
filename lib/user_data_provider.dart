@@ -361,6 +361,28 @@ class UserDataProvider with ChangeNotifier {
     checkForNewAnnouncements();
   }
 
+  Future<void> refreshUserData() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+
+      if (doc.exists) {
+        _userData = doc.data() as Map<String, dynamic>;
+        notifyListeners();
+      }
+    }
+  }
+
+  Future<void> updateUserProfile(String username, String photoURL) async {
+    // Update the local user data
+    _userData?['username'] = username;
+    _userData?['photoURL'] = photoURL;
+    notifyListeners();
+  }
+
   Future<void> initNotifications() async {
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/ic_launcher');

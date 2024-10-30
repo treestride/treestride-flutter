@@ -8,7 +8,7 @@ import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
 import 'package:scan/scan.dart';
 
-import 'profile.dart';
+import 'bottom_navigation.dart';
 
 class QRViewer extends StatefulWidget {
   const QRViewer({super.key});
@@ -51,7 +51,7 @@ class QRViewerHomeState extends State<QRViewer> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => const Profile(),
+            builder: (context) => const TabNavigator(initialIndex: 4),
           ),
         );
       },

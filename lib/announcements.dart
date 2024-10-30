@@ -207,9 +207,9 @@ class AnnouncementPageState extends State<AnnouncementPage> {
                 )
               : ListView.builder(
                   padding: const EdgeInsets.only(
-                    top: 24,
-                    left: 24,
-                    right: 24,
+                    top: 14,
+                    left: 14,
+                    right: 14,
                   ),
                   itemCount: announcements.length + 1,
                   itemBuilder: (context, index) {
@@ -219,7 +219,7 @@ class AnnouncementPageState extends State<AnnouncementPage> {
                           AnnouncementCard(
                             announcement: announcements[index],
                           ),
-                          const SizedBox(height: 24)
+                          const SizedBox(height: 14)
                         ],
                       );
                     } else if (hasMore) {
@@ -247,7 +247,7 @@ class AnnouncementPageState extends State<AnnouncementPage> {
                                 ),
                               ),
                             ),
-                          const SizedBox(height: 24)
+                          const SizedBox(height: 14)
                         ],
                       );
                     } else {

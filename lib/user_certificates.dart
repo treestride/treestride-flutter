@@ -10,8 +10,8 @@ import 'package:http/http.dart' as http;
 import 'dart:io';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
 
+import 'bottom_navigation.dart';
 import 'offline.dart';
-import 'profile.dart';
 
 class UserCertificates extends StatefulWidget {
   const UserCertificates({super.key});
@@ -148,7 +148,7 @@ class UserCertificatesState extends State<UserCertificates> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => const Profile(),
+            builder: (context) => const TabNavigator(initialIndex: 4),
           ),
         );
       },
@@ -163,7 +163,7 @@ class UserCertificatesState extends State<UserCertificates> {
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const Profile(),
+                  builder: (context) => const TabNavigator(initialIndex: 4),
                 ),
               );
             },
@@ -204,9 +204,9 @@ class UserCertificatesState extends State<UserCertificates> {
               )
             : ListView.builder(
                 padding: const EdgeInsets.only(
-                  top: 24,
-                  left: 24,
-                  right: 24,
+                  top: 14,
+                  left: 14,
+                  right: 14,
                 ),
                 itemCount: _certificates.length + (_hasMore ? 1 : 0),
                 itemBuilder: (context, index) {
@@ -297,7 +297,7 @@ class UserCertificatesState extends State<UserCertificates> {
                           ],
                         ),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 14),
                     ],
                   );
                 },
@@ -313,7 +313,7 @@ class UserCertificatesState extends State<UserCertificates> {
             strokeWidth: 6,
           )
         : Padding(
-            padding: const EdgeInsets.only(bottom: 24.0),
+            padding: const EdgeInsets.only(bottom: 14.0),
             child: Column(
               children: [
                 ElevatedButton(

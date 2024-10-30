@@ -333,7 +333,7 @@ class JoggingCounterHomeState extends State<JoggingCounterHome>
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(24),
+                        padding: const EdgeInsets.all(14),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -396,7 +396,7 @@ class JoggingCounterHomeState extends State<JoggingCounterHome>
                                 ],
                               ),
                             ),
-                            const SizedBox(height: 24),
+                            const SizedBox(height: 14),
                             Image.asset(
                               "assets/images/jogging.png",
                               height: 48,

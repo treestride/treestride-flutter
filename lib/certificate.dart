@@ -17,7 +17,8 @@ import 'package:share_plus/share_plus.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:treestride/offline.dart';
-import 'package:treestride/plant_tree.dart';
+
+import 'bottom_navigation.dart';
 
 class Certificate extends StatefulWidget {
   final Map<String, dynamic> treeData;
@@ -250,7 +251,7 @@ class CertificateState extends State<Certificate> {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (context) => const TreeShop(),
+              builder: (context) => const TabNavigator(initialIndex: 3),
             ),
           );
         },
@@ -265,7 +266,7 @@ class CertificateState extends State<Certificate> {
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const TreeShop(),
+                    builder: (context) => const TabNavigator(initialIndex: 3),
                   ),
                 );
               },
@@ -286,7 +287,7 @@ class CertificateState extends State<Certificate> {
           body: Center(
             child: SingleChildScrollView(
               child: Padding(
-                padding: const EdgeInsets.all(24.0),
+                padding: const EdgeInsets.all(14.0),
                 child: Column(
                   children: [
                     RepaintBoundary(
@@ -455,12 +456,15 @@ class CertificateState extends State<Certificate> {
                           color: Colors.black,
                         ),
                       ),
-                      onPressed: () => Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const TreeShop(),
-                        ),
-                      ),
+                      onPressed: () {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                const TabNavigator(initialIndex: 3),
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),

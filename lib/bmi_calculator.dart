@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'workout.dart';
+import 'bottom_navigation_fitness.dart';
 
 class BMI extends StatelessWidget {
   const BMI({super.key});
@@ -113,7 +113,7 @@ class BMICalculatorState extends State<BMICalculator> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => const Workout(),
+            builder: (context) => const TabNavigatorFitness(initialIndex: 0),
           ),
         );
       },
@@ -128,7 +128,8 @@ class BMICalculatorState extends State<BMICalculator> {
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const Workout(),
+                  builder: (context) =>
+                      const TabNavigatorFitness(initialIndex: 0),
                 ),
               );
             },
@@ -149,7 +150,7 @@ class BMICalculatorState extends State<BMICalculator> {
         body: Center(
           child: SingleChildScrollView(
             child: Padding(
-              padding: const EdgeInsets.all(24.0),
+              padding: const EdgeInsets.all(14.0),
               child: Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
@@ -176,15 +177,15 @@ class BMICalculatorState extends State<BMICalculator> {
                         ),
                         textAlign: TextAlign.center,
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 14),
                       _buildInputField(_heightController, 'Height (cm)'),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 14),
                       _buildInputField(_weightController, 'Weight (kg)'),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 14),
                       _buildInputField(_ageController, 'Age'),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 14),
                       _buildGenderSelector(),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 14),
                       ElevatedButton(
                         onPressed: _calculateBMI,
                         style: ElevatedButton.styleFrom(
@@ -202,7 +203,7 @@ class BMICalculatorState extends State<BMICalculator> {
                         ),
                       ),
                       if (_bmi != null) ...[
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 14),
                         _buildResultCard(),
                       ],
                     ],
@@ -312,7 +313,7 @@ class BMICalculatorState extends State<BMICalculator> {
             const Text(
               'YOUR BMI',
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 16,
                 color: Colors.black,
               ),
             ),

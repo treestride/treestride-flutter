@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'workout.dart';
+import 'bottom_navigation_fitness.dart';
 
 class FlexibilityWorkoutPlan extends StatelessWidget {
   const FlexibilityWorkoutPlan({super.key});
@@ -11,7 +11,9 @@ class FlexibilityWorkoutPlan extends StatelessWidget {
       onPopInvoked: (didPop) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const Workout()),
+          MaterialPageRoute(
+            builder: (context) => const TabNavigatorFitness(initialIndex: 0),
+          ),
         );
       },
       child: Scaffold(
@@ -26,7 +28,8 @@ class FlexibilityWorkoutPlan extends StatelessWidget {
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const Workout(),
+                  builder: (context) =>
+                      const TabNavigatorFitness(initialIndex: 0),
                 ),
               );
             },
@@ -44,7 +47,7 @@ class FlexibilityWorkoutPlan extends StatelessWidget {
           ),
         ),
         body: ListView(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(14.0),
           children: [
             _buildIntroCard(),
             ...List.generate(7, (index) => _buildDayCard(index + 1)),
@@ -107,7 +110,7 @@ class FlexibilityWorkoutPlan extends StatelessWidget {
 
     return Column(
       children: [
-        const SizedBox(height: 24),
+        const SizedBox(height: 14),
         Container(
           decoration: BoxDecoration(
             color: const Color(0xFFFEFEFE),

@@ -3,15 +3,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import 'offline.dart';
-import 'user_feed.dart';
-import 'environmentalist.dart';
-import 'profile.dart';
-import 'plant_tree.dart';
 import 'user_data_provider.dart';
 
 class Leaderboard extends StatelessWidget {
@@ -61,6 +59,16 @@ class LeaderboardHomeState extends State<LeaderboardHome> {
     });
   }
 
+  void _showToast(String message) {
+    Fluttertoast.showToast(
+      msg: message,
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+      backgroundColor: Colors.black,
+      textColor: Colors.white,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<UserDataProvider>(
@@ -79,13 +87,57 @@ class LeaderboardHomeState extends State<LeaderboardHome> {
       }
       return PopScope(
         canPop: false,
-        onPopInvoked: (didPop) async {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const Environmentalist(),
-            ),
-          );
+        onPopInvoked: (didPop) {
+          try {
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: const Text(
+                    textAlign: TextAlign.center,
+                    'Close TreeStride?',
+                    style: TextStyle(
+                      fontSize: 24,
+                      color: Colors.black,
+                    ),
+                  ),
+                  actionsAlignment: MainAxisAlignment.spaceAround,
+                  actions: <Widget>[
+                    TextButton(
+                      style: TextButton.styleFrom(
+                        foregroundColor: const Color(0xFF08DAD6),
+                        surfaceTintColor: const Color(0xFF08DAD6),
+                      ),
+                      child: const Text(
+                        'Stay',
+                        style: TextStyle(
+                          color: Colors.black,
+                        ),
+                      ),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                    TextButton(
+                      style: TextButton.styleFrom(
+                        foregroundColor: const Color(0xFF08DAD6),
+                        surfaceTintColor: const Color(0xFF08DAD6),
+                      ),
+                      child: const Text(
+                        'Close',
+                        style: TextStyle(
+                          color: Colors.black,
+                        ),
+                      ),
+                      onPressed: () {
+                        SystemNavigator.pop();
+                      },
+                    ),
+                  ],
+                );
+              },
+            );
+          } catch (error) {
+            _showToast("Closing Error: $error");
+          }
         },
         child: Scaffold(
           backgroundColor: const Color(0xFFEFEFEF),
@@ -93,20 +145,6 @@ class LeaderboardHomeState extends State<LeaderboardHome> {
             elevation: 2,
             backgroundColor: const Color(0xFFFEFEFE),
             shadowColor: Colors.grey.withOpacity(0.5),
-            leading: IconButton(
-              onPressed: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const Environmentalist(),
-                  ),
-                );
-              },
-              icon: const Icon(
-                Icons.arrow_back,
-              ),
-              iconSize: 24,
-            ),
             centerTitle: true,
             title: const Text(
               'LEADERBOARD',
@@ -114,116 +152,6 @@ class LeaderboardHomeState extends State<LeaderboardHome> {
                 fontWeight: FontWeight.bold,
                 fontSize: 24,
               ),
-            ),
-          ),
-          bottomNavigationBar: Container(
-            padding: const EdgeInsets.symmetric(vertical: 10.0),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFEFEFE),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.3),
-                  spreadRadius: 1,
-                  blurRadius: 2,
-                  offset: const Offset(0, -1),
-                ),
-              ],
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: <Widget>[
-                Stack(
-                  children: [
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const UserFeedPage(),
-                          ),
-                        );
-                      },
-                      child: const Icon(
-                        Icons.view_agenda_outlined,
-                        size: 30,
-                      ),
-                    ),
-                    if (userDataProvider.unreadPosts != '0')
-                      Positioned(
-                        right: 0,
-                        top: 0,
-                        child: Container(
-                          padding: const EdgeInsets.all(2),
-                          decoration: BoxDecoration(
-                            color: Colors.red,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          constraints: const BoxConstraints(
-                            minWidth: 16,
-                            minHeight: 16,
-                          ),
-                          child: Text(
-                            userDataProvider.unreadPosts,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-                GestureDetector(
-                  onTap: () {},
-                  child: const Icon(
-                    Icons.emoji_events_outlined,
-                    size: 30,
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const Environmentalist(),
-                      ),
-                    );
-                  },
-                  child: const Icon(
-                    Icons.directions_walk_outlined,
-                    size: 30,
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const TreeShop(),
-                      ),
-                    );
-                  },
-                  child: const Icon(
-                    Icons.park_outlined,
-                    size: 30,
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const Profile(),
-                      ),
-                    );
-                  },
-                  child: const Icon(
-                    Icons.perm_identity_outlined,
-                    size: 30,
-                  ),
-                ),
-              ],
             ),
           ),
           body: const LeaderboardList(),
@@ -317,7 +245,7 @@ class LeaderboardListState extends State<LeaderboardList> {
         if (_users.isNotEmpty) _buildTopThree(),
         Expanded(
           child: ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
             itemCount: _users.length + (_hasMore ? 1 : 0),
             itemBuilder: (context, index) {
               if (index < _users.length) {
@@ -339,7 +267,7 @@ class LeaderboardListState extends State<LeaderboardList> {
 
   Widget _buildTopThree() {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 24),
+      padding: const EdgeInsets.symmetric(vertical: 14),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
@@ -412,7 +340,7 @@ class LeaderboardListState extends State<LeaderboardList> {
               Text(
                 textAlign: TextAlign.center,
                 '${_formatNumber((user['totalSteps']))} STEPS',
-                style: TextStyle(fontSize: fontSize - 2),
+                style: TextStyle(fontSize: fontSize - 2.5),
               ),
             ],
           ),
@@ -433,7 +361,7 @@ class LeaderboardListState extends State<LeaderboardList> {
 
   Widget _buildUserListItem(Map<String, dynamic> user, int index) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.only(bottom: 14),
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,

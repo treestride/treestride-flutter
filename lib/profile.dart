@@ -1,38 +1,43 @@
-// ignore_for_file: use_build_context_synchronously
+// ignore_for_file: use_build_context_synchronously, deprecated_member_use
 
 import 'dart:convert';
 import 'dart:ui' as ui;
+import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'edit_profile.dart';
 import 'offline.dart';
 import 'user_trees.dart';
 import 'user_certificates.dart';
-import 'user_feed.dart';
-import 'environmentalist.dart';
-import 'leaderboard.dart';
 import 'qr_viewer.dart';
-import 'plant_tree.dart';
 import 'user_data_provider.dart';
 
-class Profile extends StatefulWidget {
+class Profile extends StatelessWidget {
   const Profile({super.key});
 
   @override
-  ProfileState createState() => ProfileState();
+  Widget build(BuildContext context) {
+    return const ProfileState();
+  }
 }
 
-class ProfileState extends State<Profile> {
+class ProfileState extends StatefulWidget {
+  const ProfileState({super.key});
+
+  @override
+  UserProfileState createState() => UserProfileState();
+}
+
+class UserProfileState extends State<ProfileState> {
   final GlobalKey _qrKey = GlobalKey();
   late Stream<List<ConnectivityResult>> _connectivityStream;
 
@@ -86,6 +91,9 @@ class ProfileState extends State<Profile> {
   }
 
   Future<void> _loadQRCodeImage() async {
+    // Delay slightly to ensure the QR widget is rendered
+    await Future.delayed(const Duration(milliseconds: 500));
+
     final userDataProvider =
         Provider.of<UserDataProvider>(context, listen: false);
     final userData = userDataProvider.userData!;
@@ -93,14 +101,103 @@ class ProfileState extends State<Profile> {
     // Check if the QR code image already exists in Firebase Storage
     final storageRef = FirebaseStorage.instance.ref();
     final qrImageRef = storageRef.child('qr_codes/${userData['username']}.png');
+
     try {
+      // Check if QR code exists and user has userQrCode field
       final downloadURL = await qrImageRef.getDownloadURL();
-      if (downloadURL != '') {
-        return;
+      final hasQrCode =
+          userData['userQrCode'] != null && userData['userQrCode'].isNotEmpty;
+
+      if (!hasQrCode || downloadURL != userData['userQrCode']) {
+        // If QR code doesn't exist or URLs don't match, generate and upload
+        await _generateAndUploadQR(userData);
       }
     } catch (e) {
-      // If the QR code image doesn't exist, generate a new one and upload it
-      await _captureAndUploadQRCode(context, userData);
+      // If the QR code image doesn't exist, generate and upload
+      await _generateAndUploadQR(userData);
+    }
+  }
+
+  Future<void> _generateAndUploadQR(Map<String, dynamic> userData) async {
+    try {
+      // Create a new GlobalKey for temporary QR generation
+      final tempQrKey = GlobalKey();
+
+      // Build the QR widget off-screen
+      final qrWidget = RepaintBoundary(
+        key: tempQrKey,
+        child: Container(
+          width: 250,
+          height: 250,
+          alignment: Alignment.center,
+          color: const Color(0xFFFEFEFE),
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                QrImageView(
+                  data: _generateQRData(userData),
+                  version: QrVersions.auto,
+                  size: 200.0,
+                  padding: const EdgeInsets.all(14),
+                  backgroundColor: const Color(0xFFFEFEFE),
+                ),
+                Text(
+                  userData['username'],
+                  style: const TextStyle(
+                    color: Colors.black,
+                    fontSize: 16,
+                  ),
+                )
+              ],
+            ),
+          ),
+        ),
+      );
+
+      // Insert the widget into the tree
+      final overlay = OverlayEntry(
+        builder: (context) => Positioned(
+          left: -1000, // Position off-screen
+          child: qrWidget,
+        ),
+      );
+
+      Overlay.of(context).insert(overlay);
+
+      // Wait for the widget to be rendered
+      await Future.delayed(const Duration(milliseconds: 100));
+
+      // Capture the QR code
+      final RenderRepaintBoundary boundary =
+          tempQrKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
+      final ui.Image image = await boundary.toImage(pixelRatio: 3.0);
+      final ByteData? byteData =
+          await image.toByteData(format: ui.ImageByteFormat.png);
+      final Uint8List pngBytes = byteData!.buffer.asUint8List();
+
+      // Remove the temporary widget
+      overlay.remove();
+
+      // Upload to Firebase Storage
+      final storageRef = FirebaseStorage.instance.ref();
+      final qrImageRef =
+          storageRef.child('qr_codes/${userData['username']}.png');
+      await qrImageRef.putData(pngBytes);
+
+      // Get download URL
+      final downloadURL = await qrImageRef.getDownloadURL();
+
+      // Update Firestore with the download URL
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .update({'userQrCode': downloadURL});
+      }
+    } catch (e) {
+      _showErrorToast("Error generating QR code: $e");
     }
   }
 
@@ -251,347 +348,273 @@ class ProfileState extends State<Profile> {
     );
   }
 
+  void _navigateToEditProfile() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const EditProfile(),
+      ),
+    );
+
+    if (!mounted) return;
+    // Refresh data after returning
+    Provider.of<UserDataProvider>(context, listen: false).refreshUserData();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      theme: ThemeData(
-        textTheme: GoogleFonts.exo2TextTheme(
-          Theme.of(context).textTheme,
-        ),
-        primaryTextTheme: GoogleFonts.exoTextTheme(
-          Theme.of(context).primaryTextTheme,
-        ),
-      ),
-      home: Consumer<UserDataProvider>(
-        builder: (context, userDataProvider, child) {
-          if (userDataProvider.userData == null &&
-              userDataProvider.missionData == null) {
-            return const Scaffold(
-              backgroundColor: Color(0xFFEFEFEF),
-              body: Center(
-                child: CircularProgressIndicator(
-                  color: Color(0xFF08DAD6),
-                  strokeWidth: 6.0,
-                ),
+    return Consumer<UserDataProvider>(
+      builder: (context, userDataProvider, child) {
+        if (userDataProvider.userData == null &&
+            userDataProvider.missionData == null) {
+          return const Scaffold(
+            backgroundColor: Color(0xFFEFEFEF),
+            body: Center(
+              child: CircularProgressIndicator(
+                color: Color(0xFF08DAD6),
+                strokeWidth: 6.0,
               ),
-            );
-          }
-          return PopScope(
-            canPop: false,
-            onPopInvoked: (didPop) async {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const Environmentalist(),
-                ),
-              );
-            },
-            child: Scaffold(
-              backgroundColor: const Color(0xFFEFEFEF),
-              appBar: AppBar(
-                elevation: 2,
-                backgroundColor: const Color(0xFFFEFEFE),
-                shadowColor: Colors.grey.withOpacity(0.5),
-                leading: IconButton(
-                  onPressed: () {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const Environmentalist(),
+            ),
+          );
+        }
+        return PopScope(
+          canPop: false,
+          onPopInvoked: (didPop) {
+            try {
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: const Text(
+                      textAlign: TextAlign.center,
+                      'Close TreeStride?',
+                      style: TextStyle(
+                        fontSize: 24,
+                        color: Colors.black,
                       ),
-                    );
-                  },
-                  icon: const Icon(
-                    Icons.arrow_back,
-                  ),
-                  iconSize: 24,
-                ),
-                centerTitle: true,
-                title: const Text(
-                  'PROFILE',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 24,
-                  ),
-                ),
-                actions: [
-                  IconButton(
-                    icon: const Icon(Icons.qr_code),
-                    onPressed: () {
-                      _showQRCodeDialog(context, userDataProvider.userData!);
-                    },
-                  ),
-                ],
-              ),
-              bottomNavigationBar: Container(
-                padding: const EdgeInsets.symmetric(vertical: 10.0),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFEFEFE),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.withOpacity(0.3),
-                      spreadRadius: 1,
-                      blurRadius: 2,
-                      offset: const Offset(0, -1),
                     ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: <Widget>[
-                    Stack(
-                      children: [
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const UserFeedPage(),
-                              ),
-                            );
-                          },
-                          child: const Icon(
-                            Icons.view_agenda_outlined,
-                            size: 30,
+                    actionsAlignment: MainAxisAlignment.spaceAround,
+                    actions: <Widget>[
+                      TextButton(
+                        style: TextButton.styleFrom(
+                          foregroundColor: const Color(0xFF08DAD6),
+                          surfaceTintColor: const Color(0xFF08DAD6),
+                        ),
+                        child: const Text(
+                          'Stay',
+                          style: TextStyle(
+                            color: Colors.black,
                           ),
                         ),
-                        if (userDataProvider.unreadPosts != '0')
-                          Positioned(
-                            right: 0,
-                            top: 0,
-                            child: Container(
-                              padding: const EdgeInsets.all(2),
-                              decoration: BoxDecoration(
-                                color: Colors.red,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              constraints: const BoxConstraints(
-                                minWidth: 16,
-                                minHeight: 16,
-                              ),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                      TextButton(
+                        style: TextButton.styleFrom(
+                          foregroundColor: const Color(0xFF08DAD6),
+                          surfaceTintColor: const Color(0xFF08DAD6),
+                        ),
+                        child: const Text(
+                          'Close',
+                          style: TextStyle(
+                            color: Colors.black,
+                          ),
+                        ),
+                        onPressed: () {
+                          SystemNavigator.pop();
+                        },
+                      ),
+                    ],
+                  );
+                },
+              );
+            } catch (error) {
+              _showErrorToast("Closing Error: $error");
+            }
+          },
+          child: Scaffold(
+            backgroundColor: const Color(0xFFEFEFEF),
+            appBar: AppBar(
+              elevation: 2,
+              automaticallyImplyLeading: false,
+              backgroundColor: const Color(0xFFFEFEFE),
+              shadowColor: Colors.grey.withOpacity(0.5),
+              leading: IconButton(
+                icon: const Icon(Icons.qr_code),
+                onPressed: () {
+                  _showQRCodeDialog(context, userDataProvider.userData!);
+                },
+              ),
+              centerTitle: true,
+              title: const Text(
+                'PROFILE',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 24,
+                ),
+              ),
+              actions: [
+                IconButton(
+                  onPressed: _navigateToEditProfile,
+                  icon: const Icon(Icons.edit),
+                ),
+              ],
+            ),
+            body: Center(
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(14.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _buildProfileHeader(context, userDataProvider),
+                      const SizedBox(height: 14),
+                      _buildStatsSection(userDataProvider),
+                      const SizedBox(height: 14),
+                      Container(
+                        width: double.infinity,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEFEFE),
+                          borderRadius: BorderRadius.circular(4),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: ui.Color(0xFFD4D4D4),
+                              blurRadius: 2,
+                              blurStyle: BlurStyle.outer,
+                            )
+                          ],
+                        ),
+                        padding: const EdgeInsets.all(24),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.directions_walk,
+                              size: 32,
+                              color: Color(0xFF08DAD6),
+                            ),
+                            const SizedBox(width: 8),
+                            const Expanded(
                               child: Text(
-                                userDataProvider.unreadPosts,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 10,
+                                "Total Steps",
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey,
                                 ),
-                                textAlign: TextAlign.center,
                               ),
                             ),
-                          ),
-                      ],
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const Leaderboard(),
-                          ),
-                        );
-                      },
-                      child: const Icon(
-                        Icons.emoji_events_outlined,
-                        size: 30,
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const Environmentalist(),
-                          ),
-                        );
-                      },
-                      child: const Icon(
-                        Icons.directions_walk_outlined,
-                        size: 30,
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const TreeShop(),
-                          ),
-                        );
-                      },
-                      child: const Icon(
-                        Icons.park_outlined,
-                        size: 30,
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: () {},
-                      child: const Icon(
-                        Icons.perm_identity_outlined,
-                        size: 30,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              body: Center(
-                child: SingleChildScrollView(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _buildProfileHeader(context, userDataProvider),
-                        const SizedBox(height: 24),
-                        _buildStatsSection(userDataProvider),
-                        const SizedBox(height: 24),
-                        Container(
-                          width: double.infinity,
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFEFEFE),
-                            borderRadius: BorderRadius.circular(4),
-                            boxShadow: const [
-                              BoxShadow(
-                                color: ui.Color(0xFFD4D4D4),
-                                blurRadius: 2,
-                                blurStyle: BlurStyle.outer,
-                              )
-                            ],
-                          ),
-                          padding: const EdgeInsets.all(24),
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.directions_walk,
-                                size: 32,
-                                color: Color(0xFF08DAD6),
+                            const SizedBox(width: 8),
+                            Text(
+                              _formatNumber(
+                                userDataProvider.userData!['totalSteps'],
                               ),
-                              const SizedBox(width: 8),
-                              const Expanded(
-                                child: Text(
-                                  "Total Steps",
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey,
-                                  ),
-                                ),
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
                               ),
-                              const SizedBox(width: 8),
-                              Text(
-                                _formatNumber(
-                                  userDataProvider.userData!['totalSteps'],
-                                ),
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 24),
-                        Container(
-                          width: double.infinity,
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFEFEFE),
-                            borderRadius: BorderRadius.circular(4),
-                            boxShadow: const [
-                              BoxShadow(
-                                color: ui.Color(0xFFD4D4D4),
-                                blurRadius: 2,
-                                blurStyle: BlurStyle.outer,
-                              )
-                            ],
-                          ),
-                          padding: const EdgeInsets.all(24),
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.star,
-                                size: 32,
-                                color: Color(0xFF08DAD6),
-                              ),
-                              const SizedBox(width: 8),
-                              const Expanded(
-                                child: Text(
-                                  "Total Points",
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                _formatNumber(
-                                  userDataProvider.userData!['totalPoints'],
-                                ),
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
+                      ),
+                      const SizedBox(height: 14),
+                      Container(
+                        width: double.infinity,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEFEFE),
+                          borderRadius: BorderRadius.circular(4),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: ui.Color(0xFFD4D4D4),
+                              blurRadius: 2,
+                              blurStyle: BlurStyle.outer,
+                            )
+                          ],
                         ),
-                        const SizedBox(height: 24),
-                        Container(
-                          width: double.infinity,
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFEFEFE),
-                            borderRadius: BorderRadius.circular(4),
-                            boxShadow: const [
-                              BoxShadow(
-                                color: ui.Color(0xFFD4D4D4),
-                                blurRadius: 2,
-                                blurStyle: BlurStyle.outer,
-                              )
-                            ],
-                          ),
-                          padding: const EdgeInsets.all(24),
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.emoji_events,
-                                size: 32,
-                                color: Color(0xFF08DAD6),
-                              ),
-                              const SizedBox(width: 8),
-                              const Expanded(
-                                child: Text(
-                                  "Missions Completed",
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey,
-                                  ),
+                        padding: const EdgeInsets.all(24),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.star,
+                              size: 32,
+                              color: Color(0xFF08DAD6),
+                            ),
+                            const SizedBox(width: 8),
+                            const Expanded(
+                              child: Text(
+                                "Total Points",
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey,
                                 ),
                               ),
-                              const SizedBox(width: 8),
-                              Text(
-                                _formatNumber(
-                                  userDataProvider
-                                      .userData!['missionsCompleted'],
-                                ),
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              _formatNumber(
+                                userDataProvider.userData!['totalPoints'],
                               ),
-                            ],
-                          ),
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(height: 14),
+                      Container(
+                        width: double.infinity,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEFEFE),
+                          borderRadius: BorderRadius.circular(4),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: ui.Color(0xFFD4D4D4),
+                              blurRadius: 2,
+                              blurStyle: BlurStyle.outer,
+                            )
+                          ],
+                        ),
+                        padding: const EdgeInsets.all(24),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.emoji_events,
+                              size: 32,
+                              color: Color(0xFF08DAD6),
+                            ),
+                            const SizedBox(width: 8),
+                            const Expanded(
+                              child: Text(
+                                "Missions Completed",
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              _formatNumber(
+                                userDataProvider.userData!['missionsCompleted'],
+                              ),
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
             ),
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -654,7 +677,7 @@ class ProfileState extends State<Profile> {
           const SizedBox(height: 14),
           ElevatedButton.icon(
             onPressed: () {
-              Navigator.of(context).pushReplacement(
+              Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (context) => const QRViewer(),
                 ),
@@ -692,7 +715,7 @@ class ProfileState extends State<Profile> {
       children: [
         GestureDetector(
           onTap: () {
-            Navigator.pushReplacement(
+            Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => const PlantedTrees(),
@@ -706,7 +729,7 @@ class ProfileState extends State<Profile> {
             Icons.arrow_forward,
           ),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 14),
         GestureDetector(
           onTap: () {
             Navigator.pushReplacement(
@@ -746,7 +769,7 @@ class ProfileState extends State<Profile> {
       padding: const EdgeInsets.all(24),
       child: Row(
         children: [
-          Icon(icon, size: 32, color: const Color(0xFF08DAD6)),
+          Icon(icon, size: 24, color: const Color(0xFF08DAD6)),
           const SizedBox(width: 8),
           Text(
             title,
@@ -767,7 +790,7 @@ class ProfileState extends State<Profile> {
               ),
             ),
           ),
-          Icon(arrow, size: 32, color: const Color(0xFF08DAD6)),
+          Icon(arrow, size: 24, color: const Color(0xFF08DAD6)),
         ],
       ),
     );

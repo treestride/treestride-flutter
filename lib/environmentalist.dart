@@ -9,13 +9,10 @@ import 'package:treestride/jogging.dart';
 import 'package:treestride/running.dart';
 
 import 'announcements.dart';
+import 'bottom_navigation.dart';
 import 'fitness.dart';
-import 'user_feed.dart';
-import 'leaderboard.dart';
 import 'login.dart';
-import 'profile.dart';
 import 'walking.dart';
-import 'plant_tree.dart';
 import 'user_data_provider.dart';
 
 void main() {
@@ -37,7 +34,7 @@ class Environmentalist extends StatelessWidget {
           Theme.of(context).primaryTextTheme,
         ),
       ),
-      home: const EnvironmentalistPage(),
+      home: const TabNavigator(),
     );
   }
 }
@@ -190,7 +187,7 @@ class EnvironmentalistPageState extends State<EnvironmentalistPage> {
           ],
         ),
         child: const Padding(
-          padding: EdgeInsets.all(24.0),
+          padding: EdgeInsets.all(14.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -224,7 +221,7 @@ class EnvironmentalistPageState extends State<EnvironmentalistPage> {
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(24.0),
+        padding: const EdgeInsets.all(14.0),
         child: Column(
           children: [
             const Text(
@@ -347,7 +344,7 @@ class EnvironmentalistPageState extends State<EnvironmentalistPage> {
           const SizedBox(height: 14),
           ElevatedButton(
             onPressed: () {
-              Navigator.pushReplacement(
+              Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) => const WalkingCounter(),
@@ -386,7 +383,7 @@ class EnvironmentalistPageState extends State<EnvironmentalistPage> {
           const SizedBox(height: 14),
           ElevatedButton(
             onPressed: () {
-              Navigator.pushReplacement(
+              Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) => const JoggingCounter(),
@@ -425,7 +422,7 @@ class EnvironmentalistPageState extends State<EnvironmentalistPage> {
           const SizedBox(height: 14),
           ElevatedButton(
             onPressed: () {
-              Navigator.pushReplacement(
+              Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) => const RunningCounter(),
@@ -550,6 +547,7 @@ class EnvironmentalistPageState extends State<EnvironmentalistPage> {
             backgroundColor: const Color(0xFFEFEFEF),
             appBar: AppBar(
               elevation: 2.0,
+              automaticallyImplyLeading: false,
               backgroundColor: const Color(0xFFFEFEFE),
               shadowColor: Colors.grey.withOpacity(0.5),
               toolbarHeight: 64,
@@ -607,8 +605,9 @@ class EnvironmentalistPageState extends State<EnvironmentalistPage> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) =>
-                                const AnnouncementPage(previousPage: Environmentalist()),
+                            builder: (context) => const AnnouncementPage(
+                              previousPage: Environmentalist(),
+                            ),
                           ),
                         );
                       },
@@ -642,120 +641,10 @@ class EnvironmentalistPageState extends State<EnvironmentalistPage> {
                 ),
               ],
             ),
-            bottomNavigationBar: Container(
-              padding: const EdgeInsets.symmetric(vertical: 10.0),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFEFEFE),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.3),
-                    spreadRadius: 1,
-                    blurRadius: 2,
-                    offset: const Offset(0, -1),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: <Widget>[
-                  Stack(
-                    children: [
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const UserFeedPage(),
-                            ),
-                          );
-                        },
-                        child: const Icon(
-                          Icons.view_agenda_outlined,
-                          size: 30,
-                        ),
-                      ),
-                      if (userDataProvider.unreadPosts != '0')
-                        Positioned(
-                          right: 0,
-                          top: 0,
-                          child: Container(
-                            padding: const EdgeInsets.all(2),
-                            decoration: BoxDecoration(
-                              color: Colors.red,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            constraints: const BoxConstraints(
-                              minWidth: 16,
-                              minHeight: 16,
-                            ),
-                            child: Text(
-                              userDataProvider.unreadPosts,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 10,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const Leaderboard(),
-                        ),
-                      );
-                    },
-                    child: const Icon(
-                      Icons.emoji_events_outlined,
-                      size: 30,
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () {},
-                    child: const Icon(
-                      Icons.directions_walk_outlined,
-                      size: 30,
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const TreeShop(),
-                        ),
-                      );
-                    },
-                    child: const Icon(
-                      Icons.park_outlined,
-                      size: 30,
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const Profile(),
-                        ),
-                      );
-                    },
-                    child: const Icon(
-                      Icons.perm_identity_outlined,
-                      size: 30,
-                    ),
-                  ),
-                ],
-              ),
-            ),
             body: Center(
               child: SingleChildScrollView(
                 child: Padding(
-                  padding: const EdgeInsets.all(24.0),
+                  padding: const EdgeInsets.all(14.0),
                   child: userDataProvider.missionData == null
                       ? const CircularProgressIndicator(
                           color: Color(0xFF08DAD6),
