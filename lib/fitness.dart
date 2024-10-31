@@ -475,7 +475,7 @@ class FitnessState extends State<FitnessMode> {
                           const SizedBox(height: 14),
                           ElevatedButton(
                             onPressed: () {
-                              Navigator.push(
+                              Navigator.pushReplacement(
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) =>
@@ -515,7 +515,7 @@ class FitnessState extends State<FitnessMode> {
                           const SizedBox(height: 14),
                           ElevatedButton(
                             onPressed: () {
-                              Navigator.push(
+                              Navigator.pushReplacement(
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) =>
@@ -555,7 +555,7 @@ class FitnessState extends State<FitnessMode> {
                           const SizedBox(height: 14),
                           ElevatedButton(
                             onPressed: () {
-                              Navigator.push(
+                              Navigator.pushReplacement(
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) =>
