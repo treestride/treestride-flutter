@@ -200,7 +200,7 @@ class TreeShopHomeState extends State<TreeShopHome> {
       });
 
       // Navigate to Certificate page
-      Navigator.push(
+      Navigator.pushReplacement(
         context,
         MaterialPageRoute(
           builder: (context) => Certificate(
@@ -238,7 +238,7 @@ class TreeShopHomeState extends State<TreeShopHome> {
             alignment: Alignment.center,
             child: SingleChildScrollView(
               child: Text(
-                textAlign: TextAlign.justify,
+                textAlign: TextAlign.center,
                 description,
                 style: const TextStyle(
                   color: Colors.black,

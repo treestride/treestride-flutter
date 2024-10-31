@@ -244,7 +244,7 @@ class UserDataDisplay extends StatelessWidget {
       body: Center(
         child: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.all(24.0),
+            padding: const EdgeInsets.all(14.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               mainAxisAlignment: MainAxisAlignment.center,
@@ -288,7 +288,7 @@ class UserDataDisplay extends StatelessWidget {
                     ],
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 14),
                 Column(
                   children: [
                     _buildStatCard(
@@ -296,7 +296,7 @@ class UserDataDisplay extends StatelessWidget {
                       '${userData['totalSteps']}',
                       Icons.directions_walk,
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 14),
                     _buildStatCard(
                       'Total Points',
                       '${userData['totalPoints']}',
@@ -304,7 +304,7 @@ class UserDataDisplay extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 14),
                 Column(
                   children: [
                     _buildStatCard(
@@ -312,7 +312,7 @@ class UserDataDisplay extends StatelessWidget {
                       '${userData['totalTrees']}',
                       Icons.park,
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 14),
                     _buildStatCard(
                       'Missions Completed',
                       '${userData['missionsCompleted']}',

@@ -113,7 +113,7 @@ class _WorkoutState extends State<WorkoutHome> {
           actions: [
             IconButton(
               onPressed: () {
-                Navigator.push(
+                Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(
                     builder: (context) => const BMI(),
@@ -135,7 +135,7 @@ class _WorkoutState extends State<WorkoutHome> {
                 children: [
                   GestureDetector(
                     onTap: () => {
-                      Navigator.push(
+                      Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
                           builder: (context) => const StrengthWorkoutPlan(),
@@ -179,7 +179,7 @@ class _WorkoutState extends State<WorkoutHome> {
                   const SizedBox(height: 14),
                   GestureDetector(
                     onTap: () => {
-                      Navigator.push(
+                      Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
                           builder: (context) => const EnduranceWorkoutPlan(),
@@ -223,7 +223,7 @@ class _WorkoutState extends State<WorkoutHome> {
                   const SizedBox(height: 14),
                   GestureDetector(
                     onTap: () => {
-                      Navigator.push(
+                      Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
                           builder: (context) => const FlexibilityWorkoutPlan(),
@@ -267,7 +267,7 @@ class _WorkoutState extends State<WorkoutHome> {
                   const SizedBox(height: 14),
                   GestureDetector(
                     onTap: () => {
-                      Navigator.push(
+                      Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
                           builder: (context) => const BalanceWorkoutPlan(),

@@ -344,7 +344,7 @@ class EnvironmentalistPageState extends State<EnvironmentalistPage> {
           const SizedBox(height: 14),
           ElevatedButton(
             onPressed: () {
-              Navigator.push(
+              Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
                   builder: (context) => const WalkingCounter(),
@@ -383,7 +383,7 @@ class EnvironmentalistPageState extends State<EnvironmentalistPage> {
           const SizedBox(height: 14),
           ElevatedButton(
             onPressed: () {
-              Navigator.push(
+              Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
                   builder: (context) => const JoggingCounter(),
@@ -422,7 +422,7 @@ class EnvironmentalistPageState extends State<EnvironmentalistPage> {
           const SizedBox(height: 14),
           ElevatedButton(
             onPressed: () {
-              Navigator.push(
+              Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
                   builder: (context) => const RunningCounter(),

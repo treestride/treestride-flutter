@@ -152,7 +152,7 @@ class BMICalculatorState extends State<BMICalculator> {
             child: Padding(
               padding: const EdgeInsets.all(14.0),
               child: Container(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFEFEFE),
                   borderRadius: BorderRadius.circular(4),

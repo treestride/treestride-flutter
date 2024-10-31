@@ -489,7 +489,7 @@ class UserProfileState extends State<ProfileState> {
                           children: [
                             const Icon(
                               Icons.directions_walk,
-                              size: 32,
+                              size: 24,
                               color: Color(0xFF08DAD6),
                             ),
                             const SizedBox(width: 8),
@@ -535,7 +535,7 @@ class UserProfileState extends State<ProfileState> {
                           children: [
                             const Icon(
                               Icons.star,
-                              size: 32,
+                              size: 24,
                               color: Color(0xFF08DAD6),
                             ),
                             const SizedBox(width: 8),
@@ -581,7 +581,7 @@ class UserProfileState extends State<ProfileState> {
                           children: [
                             const Icon(
                               Icons.emoji_events,
-                              size: 32,
+                              size: 24,
                               color: Color(0xFF08DAD6),
                             ),
                             const SizedBox(width: 8),
