@@ -91,173 +91,180 @@ class UserProfileState extends State<ProfileState> {
   }
 
   Future<void> _loadQRCodeImage() async {
-  if (!mounted) return;
-
-  try {
-    final userDataProvider = Provider.of<UserDataProvider>(context, listen: false);
-    if (userDataProvider.userData == null) {
-      return; // Silent return instead of showing error toast when closing
-    }
-
-    final userData = userDataProvider.userData!;
-    if (!mounted) return; // Check mounted state again after async operation
-
-    // Check storage reference
-    final storageRef = FirebaseStorage.instance.ref();
-    if (userData['username'] == null) return; // Check if username exists
-    
-    final qrImageRef = storageRef.child('qr_codes/${userData['username']}.png');
-
-    bool shouldGenerateNewQR = false;
-
-    try {
-      final downloadURL = await qrImageRef.getDownloadURL();
-      if (!mounted) return; // Check mounted after async operation
-      
-      final hasQrCode = userData['userQrCode'] != null && userData['userQrCode'].isNotEmpty;
-      shouldGenerateNewQR = !hasQrCode || downloadURL != userData['userQrCode'];
-    } catch (e) {
-      if (!mounted) return;
-      shouldGenerateNewQR = true;
-    }
-
-    if (shouldGenerateNewQR && mounted) {
-      await _generateAndUploadQR(userData);
-    }
-  } catch (e) {
-    if (mounted) {
-      // Only show error toast if not during app closure
-      if (!Navigator.of(context).canPop()) {
-        _showErrorToast("Error loading QR code: $e");
-      }
-    }
-  }
-}
-
-Future<void> _generateAndUploadQR(Map<String, dynamic> userData) async {
-  if (!mounted) return;
-
-  try {
-    final tempQrKey = GlobalKey();
-    final qrData = _generateQRData(userData);
-
-    // Create QR widget
-    final qrWidget = RepaintBoundary(
-      key: tempQrKey,
-      child: Material(
-        color: Colors.transparent,
-        child: Container(
-          width: 250,
-          height: 250,
-          alignment: Alignment.center,
-          color: const Color(0xFFFEFEFE),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              QrImageView(
-                data: qrData,
-                version: QrVersions.auto,
-                size: 200.0,
-                padding: const EdgeInsets.all(14),
-                backgroundColor: const Color(0xFFFEFEFE),
-              ),
-              if (userData['username'] != null)
-                Text(
-                  userData['username'],
-                  style: const TextStyle(
-                    color: Colors.black,
-                    fontSize: 16,
-                  ),
-                )
-            ],
-          ),
-        ),
-      ),
-    );
-
     if (!mounted) return;
 
-    // Create overlay entry
-    final overlayState = Overlay.of(context);
-    final entry = OverlayEntry(
-      builder: (context) => Positioned(
-        left: -1000,
-        child: qrWidget,
-      ),
-    );
+    try {
+      final userDataProvider =
+          Provider.of<UserDataProvider>(context, listen: false);
+      if (userDataProvider.userData == null) {
+        return; // Silent return instead of showing error toast when closing
+      }
 
-    overlayState.insert(entry);
+      final userData = userDataProvider.userData!;
+      if (!mounted) return; // Check mounted state again after async operation
+
+      // Check storage reference
+      final storageRef = FirebaseStorage.instance.ref();
+      if (userData['username'] == null) return; // Check if username exists
+
+      final qrImageRef =
+          storageRef.child('qr_codes/${userData['username']}.png');
+
+      bool shouldGenerateNewQR = false;
+
+      try {
+        final downloadURL = await qrImageRef.getDownloadURL();
+        if (!mounted) return; // Check mounted after async operation
+
+        final hasQrCode =
+            userData['userQrCode'] != null && userData['userQrCode'].isNotEmpty;
+        shouldGenerateNewQR =
+            !hasQrCode || downloadURL != userData['userQrCode'];
+      } catch (e) {
+        if (!mounted) return;
+        shouldGenerateNewQR = true;
+      }
+
+      if (shouldGenerateNewQR && mounted) {
+        await _generateAndUploadQR(userData);
+      }
+    } catch (e) {
+      if (mounted) {
+        // Only show error toast if not during app closure
+        if (!Navigator.of(context).canPop()) {
+          _showErrorToast("Error loading QR code: $e");
+        }
+      }
+    }
+  }
+
+  Future<void> _generateAndUploadQR(Map<String, dynamic> userData) async {
+    if (!mounted) return;
 
     try {
-      await Future.delayed(const Duration(milliseconds: 100));
-      if (!mounted) {
-        entry.remove();
-        return;
-      }
+      final tempQrKey = GlobalKey();
+      final qrData = _generateQRData(userData);
 
-      final boundary = tempQrKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
-      if (boundary == null) {
-        entry.remove();
-        return;
-      }
-
-      final image = await boundary.toImage(pixelRatio: 3.0);
-      if (!mounted) {
-        entry.remove();
-        return;
-      }
-
-      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-      if (byteData == null || !mounted) {
-        entry.remove();
-        return;
-      }
-
-      final pngBytes = byteData.buffer.asUint8List();
-
-      // Upload to Firebase Storage
-      final storageRef = FirebaseStorage.instance.ref();
-      final qrImageRef = storageRef.child('qr_codes/${userData['username']}.png');
-
-      final metadata = SettableMetadata(
-        contentType: 'image/png',
-        customMetadata: {'username': userData['username']},
+      // Create QR widget
+      final qrWidget = RepaintBoundary(
+        key: tempQrKey,
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            width: 250,
+            height: 250,
+            alignment: Alignment.center,
+            color: const Color(0xFFFEFEFE),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                QrImageView(
+                  data: qrData,
+                  version: QrVersions.auto,
+                  size: 200.0,
+                  padding: const EdgeInsets.all(14),
+                  backgroundColor: const Color(0xFFFEFEFE),
+                ),
+                if (userData['username'] != null)
+                  Text(
+                    userData['username'],
+                    style: const TextStyle(
+                      decoration: TextDecoration.none,
+                      color: Colors.black,
+                      fontSize: 16,
+                    ),
+                  )
+              ],
+            ),
+          ),
+        ),
       );
 
-      await qrImageRef.putData(pngBytes, metadata);
-      if (!mounted) {
-        entry.remove();
-        return;
-      }
+      if (!mounted) return;
 
-      final downloadURL = await qrImageRef.getDownloadURL();
-      if (!mounted) {
-        entry.remove();
-        return;
-      }
+      // Create overlay entry
+      final overlayState = Overlay.of(context);
+      final entry = OverlayEntry(
+        builder: (context) => Positioned(
+          left: -1000,
+          child: qrWidget,
+        ),
+      );
 
-      final user = FirebaseAuth.instance.currentUser;
-      if (user != null && mounted) {
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .update({'userQrCode': downloadURL});
+      overlayState.insert(entry);
+
+      try {
+        await Future.delayed(const Duration(milliseconds: 100));
+        if (!mounted) {
+          entry.remove();
+          return;
+        }
+
+        final boundary = tempQrKey.currentContext?.findRenderObject()
+            as RenderRepaintBoundary?;
+        if (boundary == null) {
+          entry.remove();
+          return;
+        }
+
+        final image = await boundary.toImage(pixelRatio: 3.0);
+        if (!mounted) {
+          entry.remove();
+          return;
+        }
+
+        final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+        if (byteData == null || !mounted) {
+          entry.remove();
+          return;
+        }
+
+        final pngBytes = byteData.buffer.asUint8List();
+
+        // Upload to Firebase Storage
+        final storageRef = FirebaseStorage.instance.ref();
+        final qrImageRef =
+            storageRef.child('qr_codes/${userData['username']}.png');
+
+        final metadata = SettableMetadata(
+          contentType: 'image/png',
+          customMetadata: {'username': userData['username']},
+        );
+
+        await qrImageRef.putData(pngBytes, metadata);
+        if (!mounted) {
+          entry.remove();
+          return;
+        }
+
+        final downloadURL = await qrImageRef.getDownloadURL();
+        if (!mounted) {
+          entry.remove();
+          return;
+        }
+
+        final user = FirebaseAuth.instance.currentUser;
+        if (user != null && mounted) {
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .update({'userQrCode': downloadURL});
+        }
+      } finally {
+        if (mounted) {
+          entry.remove();
+        }
       }
-    } finally {
+    } catch (e) {
       if (mounted) {
-        entry.remove();
+        // Only show error toast if not during app closure
+        if (!Navigator.of(context).canPop()) {
+          _showErrorToast("Error generating QR code: $e");
+        }
       }
+      rethrow;
     }
-  } catch (e) {
-    if (mounted) {
-      // Only show error toast if not during app closure
-      if (!Navigator.of(context).canPop()) {
-        _showErrorToast("Error generating QR code: $e");
-      }
-    }
-    rethrow;
   }
-}
 
   Future<Uint8List?> _captureAndUploadQRCode(
       BuildContext context, Map<String, dynamic> userData) async {
@@ -364,6 +371,7 @@ Future<void> _generateAndUploadQR(Map<String, dynamic> userData) async {
                     Text(
                       userDataProvider.userData!['username'],
                       style: const TextStyle(
+                        decoration: TextDecoration.none,
                         color: Colors.black,
                         fontSize: 16,
                       ),
