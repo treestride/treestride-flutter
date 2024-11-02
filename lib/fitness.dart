@@ -1,6 +1,7 @@
-// ignore_for_file: unrelated_type_equality_checks
+// ignore_for_file: unrelated_type_equality_checks, use_build_context_synchronously
 
-import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:http/http.dart' as http;
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -15,7 +16,6 @@ import 'bottom_navigation_fitness.dart';
 import 'environmentalist.dart';
 import 'jogging_fitness.dart';
 import 'login.dart';
-import 'offline.dart';
 import 'running_fitness.dart';
 import 'user_data_provider.dart';
 import 'walking_fitness.dart';
@@ -72,44 +72,42 @@ class FitnessState extends State<FitnessMode> {
     _initializeApp();
   }
 
-  Future<bool> _checkConnection() async {
-    var connectivityResult = await (Connectivity().checkConnectivity());
-    if (connectivityResult == ConnectivityResult.none) {
-      // No internet connection, navigate to Offline page
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const Offline()),
-        );
-      }
+  Future<bool> _checkConnectivity() async {
+    try {
+      final response = await http
+          .head(Uri.parse('https://www.google.com'))
+          .timeout(const Duration(seconds: 5));
+      return response.statusCode == 200;
+    } catch (e) {
       return false;
     }
-    return true;
   }
 
   void _navigateToEnvironmentalist() async {
-    if (await _checkConnection()) {
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const Environmentalist()),
-        );
-      }
+    if (await _checkConnectivity()) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const Environmentalist()),
+      );
+    } else {
+      _showToast("You are offline!");
+      return;
     }
   }
 
   void _navigateToAnnouncements() async {
-    if (await _checkConnection()) {
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const AnnouncementPage(
-              previousPage: Fitness(),
-            ),
+    if (await _checkConnectivity()) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const AnnouncementPage(
+            previousPage: Fitness(),
           ),
-        );
-      }
+        ),
+      );
+    } else {
+      _showToast("You are offline!");
+      return;
     }
   }
 
@@ -123,7 +121,9 @@ class FitnessState extends State<FitnessMode> {
       if (mounted) {
         _auth.signOut();
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const Login()),
+          MaterialPageRoute(
+            builder: (_) => const Login(),
+          ),
         );
       }
     }
@@ -145,7 +145,7 @@ class FitnessState extends State<FitnessMode> {
                   backgroundColor: Colors.black12,
                   child: CircleAvatar(
                     radius: 62,
-                    backgroundImage: NetworkImage(
+                    backgroundImage: CachedNetworkImageProvider(
                       userDataProvider.userData!['photoURL'] ?? 'N/A',
                     ),
                     onBackgroundImageError: (error, stackTrace) => const Icon(
@@ -250,6 +250,16 @@ class FitnessState extends State<FitnessMode> {
     );
   }
 
+  void _showToast(String message) {
+    Fluttertoast.showToast(
+      msg: message,
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+      backgroundColor: Colors.black,
+      textColor: Colors.white,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<UserDataProvider>(
@@ -337,7 +347,7 @@ class FitnessState extends State<FitnessMode> {
                       backgroundColor: Colors.black12,
                       child: CircleAvatar(
                         radius: 22,
-                        backgroundImage: NetworkImage(
+                        backgroundImage: CachedNetworkImageProvider(
                           userDataProvider.userData!['photoURL'],
                         ),
                         onBackgroundImageError: (error, stackTrace) =>

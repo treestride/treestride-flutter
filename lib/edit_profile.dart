@@ -226,7 +226,7 @@ class EditProfileHomeState extends State<EditProfile> {
           Provider.of<UserDataProvider>(context, listen: false)
               .updateUserProfile(_username, photoURL);
 
-          _showMessage('Profile Updated!');
+          _showMessage('Profile updated!');
           Navigator.of(context).pop();
         }
       } catch (e) {

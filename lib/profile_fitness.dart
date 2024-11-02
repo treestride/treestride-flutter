@@ -1,3 +1,7 @@
+// ignore_for_file: use_build_context_synchronously
+
+import 'package:http/http.dart' as http;
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -50,12 +54,28 @@ class ProfileFitnessHomeState extends State<ProfileFitnessHome>
     });
   }
 
+  Future<bool> _checkConnectivity() async {
+    try {
+      final response = await http
+          .head(Uri.parse('https://www.google.com'))
+          .timeout(const Duration(seconds: 5));
+      return response.statusCode == 200;
+    } catch (e) {
+      return false;
+    }
+  }
+
   void _navigateToEditProfile() async {
-    await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => const EditProfile(),
-      ),
-    );
+    if (await _checkConnectivity()) {
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => const EditProfile(),
+        ),
+      );
+    } else {
+      _showToast("You are offline!");
+      return;
+    }
 
     if (!mounted) return;
     // Refresh data after returning
@@ -68,6 +88,16 @@ class ProfileFitnessHomeState extends State<ProfileFitnessHome>
       toastLength: Toast.LENGTH_SHORT,
       gravity: ToastGravity.BOTTOM,
       backgroundColor: const Color(0xFFB43838),
+      textColor: Colors.white,
+    );
+  }
+
+  void _showToast(String message) {
+    Fluttertoast.showToast(
+      msg: message,
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+      backgroundColor: Colors.black,
       textColor: Colors.white,
     );
   }
@@ -191,9 +221,8 @@ class ProfileFitnessHomeState extends State<ProfileFitnessHome>
                               backgroundColor: Colors.black12,
                               child: CircleAvatar(
                                 radius: 62,
-                                backgroundImage: NetworkImage(
-                                  userDataProvider.userData!['photoURL'] ??
-                                      'N/A',
+                                backgroundImage: CachedNetworkImageProvider(
+                                  userDataProvider.userData!['photoURL'],
                                 ),
                                 onBackgroundImageError: (error, stacktrace) =>
                                     const Icon(

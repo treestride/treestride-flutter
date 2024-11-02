@@ -82,10 +82,12 @@ class PlantedTreesState extends State<PlantedTrees> {
           return;
         }
 
-        // Fetch plant requests using the username
+        // Query only the plants that belong to the current user
         Query query = FirebaseFirestore.instance
             .collection('plant_requests')
-            .where('username', isEqualTo: username)
+            .where('username',
+                isEqualTo: username) // Filter by current username
+            .orderBy('timestamp', descending: true) // Sort by timestamp
             .limit(pageSize);
 
         if (lastDocument != null) {
@@ -110,8 +112,6 @@ class PlantedTreesState extends State<PlantedTrees> {
 
         setState(() {
           userPlantRequests.addAll(newRequests);
-          // Sort the entire list after adding new requests
-          _sortPlantRequests();
           isLoading = false;
           hasMore = querySnapshot.docs.length >= pageSize;
         });
@@ -122,15 +122,6 @@ class PlantedTreesState extends State<PlantedTrees> {
         });
       }
     }
-  }
-
-  // Method to sort the plant requests
-  void _sortPlantRequests() {
-    userPlantRequests.sort((a, b) {
-      final aTimestamp = a['timestamp'] as Timestamp;
-      final bTimestamp = b['timestamp'] as Timestamp;
-      return bTimestamp.compareTo(aTimestamp); // Sort in descending order
-    });
   }
 
   Future<void> _refreshList() async {

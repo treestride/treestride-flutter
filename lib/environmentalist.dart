@@ -1,3 +1,4 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -12,6 +13,7 @@ import 'announcements.dart';
 import 'bottom_navigation.dart';
 import 'fitness.dart';
 import 'login.dart';
+import 'offline.dart';
 import 'walking.dart';
 import 'user_data_provider.dart';
 
@@ -48,10 +50,25 @@ class EnvironmentalistPage extends StatefulWidget {
 
 class EnvironmentalistPageState extends State<EnvironmentalistPage> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  late Stream<List<ConnectivityResult>> _connectivityStream;
 
   @override
   void initState() {
     super.initState();
+    _connectivityStream = Connectivity().onConnectivityChanged;
+    _checkConnection();
+  }
+
+  Future<void> _checkConnection() async {
+    _connectivityStream.listen((List<ConnectivityResult> results) {
+      if (results.contains(ConnectivityResult.none) || results.isEmpty) {
+        // No internet connection, navigate to Offline page
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const Offline()),
+        );
+      }
+    });
   }
 
   void _showUserProfile(UserDataProvider userDataProvider) async {

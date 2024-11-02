@@ -92,7 +92,7 @@ class CertificateState extends State<Certificate> {
             name: "certificate_${DateTime.now().millisecondsSinceEpoch}.png");
 
         if (result['isSuccess']) {
-          _showToast('Saved to Gallery!');
+          _showToast('Saved to gallery!');
         } else {
           _showErrorToast('Failed to save certificate');
         }

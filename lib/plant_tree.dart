@@ -123,8 +123,48 @@ class TreeShopHomeState extends State<TreeShopHome> {
     }
   }
 
+  Future<bool> _checkYearlyTreeLimit() async {
+    try {
+      // Get current user ID
+      final userId = FirebaseAuth.instance.currentUser!.uid;
+
+      // Get current timestamp and start of year
+      final now = DateTime.now();
+      final startOfYear = DateTime(now.year, 1, 1);
+
+      // Query plant_requests for this user in the current year
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('plant_requests')
+          .where('userId', isEqualTo: userId)
+          .where('timestamp', isGreaterThanOrEqualTo: startOfYear)
+          .get();
+
+      // Count the number of trees planted this year
+      final treesPlantedThisYear = querySnapshot.docs.length;
+
+      // Check if user has reached the limit
+      if (treesPlantedThisYear >= 2) {
+        _showToast(
+            'You have reached the limit of 2 trees that you can plant per year');
+        return false;
+      }
+      return true;
+    } catch (e) {
+      _showToast('Error checking yearly limit: $e');
+      return false;
+    }
+  }
+
   Future<void> _processTreePlanting(
-      String treeId, Map<String, dynamic> treeData) async {
+    String treeId,
+    Map<String, dynamic> treeData,
+  ) async {
+    // Check yearly limit
+    bool canPlantTree = await _checkYearlyTreeLimit();
+    if (!canPlantTree) {
+      return;
+    }
+
     final userDataProvider =
         Provider.of<UserDataProvider>(context, listen: false);
     final userData = userDataProvider.userData;
@@ -179,6 +219,7 @@ class TreeShopHomeState extends State<TreeShopHome> {
           FirebaseFirestore.instance.collection('plant_requests').doc(),
           {
             'timestamp': FieldValue.serverTimestamp(),
+            'userId': FirebaseAuth.instance.currentUser!.uid,
             'username': userData['username'],
             'photoURL': userData['photoURL'],
             'treeImage': treeData['image'],
@@ -234,7 +275,7 @@ class TreeShopHomeState extends State<TreeShopHome> {
             ),
           ),
           content: Container(
-            height: 150,
+            height: 120,
             alignment: Alignment.center,
             child: SingleChildScrollView(
               child: Text(

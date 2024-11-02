@@ -91,57 +91,77 @@ class UserProfileState extends State<ProfileState> {
   }
 
   Future<void> _loadQRCodeImage() async {
-    // Delay slightly to ensure the QR widget is rendered
-    await Future.delayed(const Duration(milliseconds: 500));
+  if (!mounted) return;
 
-    final userDataProvider =
-        Provider.of<UserDataProvider>(context, listen: false);
+  try {
+    final userDataProvider = Provider.of<UserDataProvider>(context, listen: false);
+    if (userDataProvider.userData == null) {
+      return; // Silent return instead of showing error toast when closing
+    }
+
     final userData = userDataProvider.userData!;
+    if (!mounted) return; // Check mounted state again after async operation
 
-    // Check if the QR code image already exists in Firebase Storage
+    // Check storage reference
     final storageRef = FirebaseStorage.instance.ref();
+    if (userData['username'] == null) return; // Check if username exists
+    
     final qrImageRef = storageRef.child('qr_codes/${userData['username']}.png');
 
-    try {
-      // Check if QR code exists and user has userQrCode field
-      final downloadURL = await qrImageRef.getDownloadURL();
-      final hasQrCode =
-          userData['userQrCode'] != null && userData['userQrCode'].isNotEmpty;
+    bool shouldGenerateNewQR = false;
 
-      if (!hasQrCode || downloadURL != userData['userQrCode']) {
-        // If QR code doesn't exist or URLs don't match, generate and upload
-        await _generateAndUploadQR(userData);
-      }
+    try {
+      final downloadURL = await qrImageRef.getDownloadURL();
+      if (!mounted) return; // Check mounted after async operation
+      
+      final hasQrCode = userData['userQrCode'] != null && userData['userQrCode'].isNotEmpty;
+      shouldGenerateNewQR = !hasQrCode || downloadURL != userData['userQrCode'];
     } catch (e) {
-      // If the QR code image doesn't exist, generate and upload
+      if (!mounted) return;
+      shouldGenerateNewQR = true;
+    }
+
+    if (shouldGenerateNewQR && mounted) {
       await _generateAndUploadQR(userData);
     }
+  } catch (e) {
+    if (mounted) {
+      // Only show error toast if not during app closure
+      if (!Navigator.of(context).canPop()) {
+        _showErrorToast("Error loading QR code: $e");
+      }
+    }
   }
+}
 
-  Future<void> _generateAndUploadQR(Map<String, dynamic> userData) async {
-    try {
-      // Create a new GlobalKey for temporary QR generation
-      final tempQrKey = GlobalKey();
+Future<void> _generateAndUploadQR(Map<String, dynamic> userData) async {
+  if (!mounted) return;
 
-      // Build the QR widget off-screen
-      final qrWidget = RepaintBoundary(
-        key: tempQrKey,
+  try {
+    final tempQrKey = GlobalKey();
+    final qrData = _generateQRData(userData);
+
+    // Create QR widget
+    final qrWidget = RepaintBoundary(
+      key: tempQrKey,
+      child: Material(
+        color: Colors.transparent,
         child: Container(
           width: 250,
           height: 250,
           alignment: Alignment.center,
           color: const Color(0xFFFEFEFE),
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                QrImageView(
-                  data: _generateQRData(userData),
-                  version: QrVersions.auto,
-                  size: 200.0,
-                  padding: const EdgeInsets.all(14),
-                  backgroundColor: const Color(0xFFFEFEFE),
-                ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              QrImageView(
+                data: qrData,
+                version: QrVersions.auto,
+                size: 200.0,
+                padding: const EdgeInsets.all(14),
+                backgroundColor: const Color(0xFFFEFEFE),
+              ),
+              if (userData['username'] != null)
                 Text(
                   userData['username'],
                   style: const TextStyle(
@@ -149,57 +169,95 @@ class UserProfileState extends State<ProfileState> {
                     fontSize: 16,
                   ),
                 )
-              ],
-            ),
+            ],
           ),
         ),
-      );
+      ),
+    );
 
-      // Insert the widget into the tree
-      final overlay = OverlayEntry(
-        builder: (context) => Positioned(
-          left: -1000, // Position off-screen
-          child: qrWidget,
-        ),
-      );
+    if (!mounted) return;
 
-      Overlay.of(context).insert(overlay);
+    // Create overlay entry
+    final overlayState = Overlay.of(context);
+    final entry = OverlayEntry(
+      builder: (context) => Positioned(
+        left: -1000,
+        child: qrWidget,
+      ),
+    );
 
-      // Wait for the widget to be rendered
+    overlayState.insert(entry);
+
+    try {
       await Future.delayed(const Duration(milliseconds: 100));
+      if (!mounted) {
+        entry.remove();
+        return;
+      }
 
-      // Capture the QR code
-      final RenderRepaintBoundary boundary =
-          tempQrKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
-      final ui.Image image = await boundary.toImage(pixelRatio: 3.0);
-      final ByteData? byteData =
-          await image.toByteData(format: ui.ImageByteFormat.png);
-      final Uint8List pngBytes = byteData!.buffer.asUint8List();
+      final boundary = tempQrKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+      if (boundary == null) {
+        entry.remove();
+        return;
+      }
 
-      // Remove the temporary widget
-      overlay.remove();
+      final image = await boundary.toImage(pixelRatio: 3.0);
+      if (!mounted) {
+        entry.remove();
+        return;
+      }
+
+      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      if (byteData == null || !mounted) {
+        entry.remove();
+        return;
+      }
+
+      final pngBytes = byteData.buffer.asUint8List();
 
       // Upload to Firebase Storage
       final storageRef = FirebaseStorage.instance.ref();
-      final qrImageRef =
-          storageRef.child('qr_codes/${userData['username']}.png');
-      await qrImageRef.putData(pngBytes);
+      final qrImageRef = storageRef.child('qr_codes/${userData['username']}.png');
 
-      // Get download URL
+      final metadata = SettableMetadata(
+        contentType: 'image/png',
+        customMetadata: {'username': userData['username']},
+      );
+
+      await qrImageRef.putData(pngBytes, metadata);
+      if (!mounted) {
+        entry.remove();
+        return;
+      }
+
       final downloadURL = await qrImageRef.getDownloadURL();
+      if (!mounted) {
+        entry.remove();
+        return;
+      }
 
-      // Update Firestore with the download URL
       final user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
+      if (user != null && mounted) {
         await FirebaseFirestore.instance
             .collection('users')
             .doc(user.uid)
             .update({'userQrCode': downloadURL});
       }
-    } catch (e) {
-      _showErrorToast("Error generating QR code: $e");
+    } finally {
+      if (mounted) {
+        entry.remove();
+      }
     }
+  } catch (e) {
+    if (mounted) {
+      // Only show error toast if not during app closure
+      if (!Navigator.of(context).canPop()) {
+        _showErrorToast("Error generating QR code: $e");
+      }
+    }
+    rethrow;
   }
+}
 
   Future<Uint8List?> _captureAndUploadQRCode(
       BuildContext context, Map<String, dynamic> userData) async {
@@ -242,17 +300,29 @@ class UserProfileState extends State<ProfileState> {
   }
 
   Future<void> _saveQRCodeToDevice(Uint8List pngBytes) async {
-    // Request storage permission
-    var status = await Permission.storage.request();
-    if (status.isGranted) {
-      final result = await ImageGallerySaver.saveImage(pngBytes);
-      if (result['isSuccess']) {
-        _showToast("Saved to Gallery!");
-      } else {
-        _showErrorToast("Failed to Saved!");
+    try {
+      // Request storage permission
+      var status = await Permission.storage.status;
+      if (!status.isGranted) {
+        status = await Permission.storage.request();
+        if (!status.isGranted) {
+          _showToast('Storage permission is required to save QR code!');
+          return;
+        }
       }
-    } else {
-      _showToast('Permission to access storage was denied');
+
+      // Add timestamp to avoid duplicate files
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final result = await ImageGallerySaver.saveImage(pngBytes,
+          quality: 100, name: "QRCode_$timestamp");
+
+      if (result['isSuccess']) {
+        _showToast("Saved to gallery!");
+      } else {
+        _showErrorToast("Failed to save QR code: ${result['error']}");
+      }
+    } catch (e) {
+      _showErrorToast("Error saving QR code: $e");
     }
   }
 

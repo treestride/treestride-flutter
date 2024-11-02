@@ -120,7 +120,7 @@ class UserCertificatesState extends State<UserCertificates> {
 
       if (result['isSuccess']) {
         Fluttertoast.showToast(
-          msg: "Saved to Gallery!",
+          msg: "Saved to gallery!",
           toastLength: Toast.LENGTH_SHORT,
           gravity: ToastGravity.BOTTOM,
           backgroundColor: Colors.black,

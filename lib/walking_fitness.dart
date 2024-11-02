@@ -1,7 +1,5 @@
 // ignore_for_file: deprecated_member_use
 
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -50,7 +48,6 @@ class WalkingCounterHomeStateFitness extends State<WalkingCounterHomeFitness>
   bool _isCounting = false;
   final double _sensitivity = 6;
   double _lastMagnitude = 0;
-  int _dailyWalkingSteps = 0;
   int _walkingSteps = 0;
   int _totalSteps = 0;
   int _totalWalkingSteps = 0;
@@ -62,7 +59,6 @@ class WalkingCounterHomeStateFitness extends State<WalkingCounterHomeFitness>
   bool _isWalkingGoalActive = false;
   String _walkingGoal = '0';
   String _walkingGoalEndDate = '';
-  Map<String, int> _walkingStepHistory = {};
 
   @override
   void initState() {
@@ -90,7 +86,6 @@ class WalkingCounterHomeStateFitness extends State<WalkingCounterHomeFitness>
     try {
       _prefs = await SharedPreferences.getInstance();
       _loadDataFromLocalStorage();
-      _checkAndResetDailySteps();
       await _checkGoalCompletion();
       setState(() {
         _currentDate = DateTime.now();
@@ -108,14 +103,6 @@ class WalkingCounterHomeStateFitness extends State<WalkingCounterHomeFitness>
       _isWalkingGoalActive = _prefs.getBool('isWalkingGoalActive') ?? false;
       _walkingGoal = _prefs.getString('walkingGoal') ?? '0';
       _walkingGoalEndDate = _prefs.getString('walkingGoalEndDate') ?? '';
-      String? walkingStepHistoryJson = _prefs.getString('walkingStepHistory');
-      if (walkingStepHistoryJson != null) {
-        Map<String, dynamic> decodedMap = json.decode(walkingStepHistoryJson);
-        _walkingStepHistory =
-            decodedMap.map((key, value) => MapEntry(key, value as int));
-      } else {
-        _walkingStepHistory = {};
-      }
     });
   }
 
@@ -126,17 +113,6 @@ class WalkingCounterHomeStateFitness extends State<WalkingCounterHomeFitness>
     await _prefs.setString('walkingGoalEndDate', _walkingGoalEndDate);
     await _prefs.setInt('totalSteps', _totalSteps);
     await _prefs.setInt('totalWalkingSteps', _totalWalkingSteps);
-    await _prefs.setInt('dailyWalkingSteps', _dailyWalkingSteps);
-    await _prefs.setString(
-        'walkingStepHistory', json.encode(_walkingStepHistory));
-    await _prefs.setString('lastWalkingRecordedDay',
-        DateFormat('yyyy-MM-dd').format(DateTime.now()));
-  }
-
-  void _updateStepHistory() {
-    String today = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    _walkingStepHistory[today] = (_walkingStepHistory[today] ?? 0) + 1;
-    _saveDataToLocalStorage();
   }
 
   void _selectDate(BuildContext context) async {
@@ -200,8 +176,6 @@ class WalkingCounterHomeStateFitness extends State<WalkingCounterHomeFitness>
   }
 
   void _countSteps(UserAccelerometerEvent event) {
-    _checkAndResetDailySteps();
-
     double magnitude =
         sqrt(event.x * event.x + event.y * event.y + event.z * event.z);
     DateTime currentTime = DateTime.now();
@@ -211,16 +185,13 @@ class WalkingCounterHomeStateFitness extends State<WalkingCounterHomeFitness>
         timeDiff.inMilliseconds > 300 &&
         magnitude - _lastMagnitude > 1.4) {
       setState(() {
-        _dailyWalkingSteps++;
         _walkingSteps++;
         _totalSteps++;
         _totalWalkingSteps++;
-        _updateStepHistory();
         _updateWalkingSteps(
           _walkingSteps,
           _totalSteps,
           _totalWalkingSteps,
-          _dailyWalkingSteps,
         );
       });
       _lastStepTime = currentTime;
@@ -238,11 +209,10 @@ class WalkingCounterHomeStateFitness extends State<WalkingCounterHomeFitness>
     _lastMagnitude = magnitude;
   }
 
-  Future<void> _updateWalkingSteps(int newStepCount, int totalStepCount,
-      int totalWalkingSteps, int dailyWalkingSteps) async {
+  Future<void> _updateWalkingSteps(
+      int newStepCount, int totalStepCount, int totalWalkingSteps) async {
     await _prefs.setInt('walkingSteps', newStepCount);
     await _prefs.setInt('totalSteps', totalStepCount);
-    await _prefs.setInt('dailyWalkingSteps', dailyWalkingSteps);
     await _prefs.setInt('totalWalkingSteps', totalWalkingSteps);
   }
 
@@ -262,26 +232,6 @@ class WalkingCounterHomeStateFitness extends State<WalkingCounterHomeFitness>
         _saveDataToLocalStorage();
         _showToast("Congratulations! You've completed your walking goal!");
       }
-    }
-  }
-
-  void _checkAndResetDailySteps() {
-    String today = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    String lastRecordedDay = _prefs.getString('lastWalkingRecordedDay') ?? '';
-
-    if (today != lastRecordedDay) {
-      // It's a new day, reset the walking steps
-      _dailyWalkingSteps = 0;
-      _prefs.setInt('dailyWalkingSteps', 0);
-      _prefs.setString('lastWalkingRecordedDay', today);
-
-      // Ensure there's an entry for today in the history
-      if (!_walkingStepHistory.containsKey(today)) {
-        _walkingStepHistory[today] = 0;
-      }
-
-      // Save the updated history
-      _saveDataToLocalStorage();
     }
   }
 

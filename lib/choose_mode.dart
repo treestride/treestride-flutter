@@ -1,4 +1,6 @@
-import 'package:connectivity_plus/connectivity_plus.dart';
+// ignore_for_file: unrelated_type_equality_checks, use_build_context_synchronously
+
+import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -10,7 +12,6 @@ import 'package:provider/provider.dart';
 import 'fitness.dart';
 import 'environmentalist.dart';
 import 'login.dart';
-import 'offline.dart';
 import 'user_data_provider.dart';
 
 void main() {
@@ -45,7 +46,6 @@ class ChooseModeHome extends StatefulWidget {
 }
 
 class _ChooseModeState extends State<ChooseModeHome> {
-  late Stream<List<ConnectivityResult>> _connectivityStream;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   @override
@@ -54,8 +54,6 @@ class _ChooseModeState extends State<ChooseModeHome> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeApp();
     });
-    _connectivityStream = Connectivity().onConnectivityChanged;
-    _checkConnection();
     _requestPermissions();
   }
 
@@ -67,16 +65,27 @@ class _ChooseModeState extends State<ChooseModeHome> {
     ].request();
   }
 
-  Future<void> _checkConnection() async {
-    _connectivityStream.listen((List<ConnectivityResult> results) {
-      if (results.contains(ConnectivityResult.none) || results.isEmpty) {
-        // No internet connection, navigate to Offline page
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const Offline()),
-        );
-      }
-    });
+  Future<bool> _checkConnectivity() async {
+    try {
+      final response = await http
+          .head(Uri.parse('https://www.google.com'))
+          .timeout(const Duration(seconds: 5));
+      return response.statusCode == 200;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  void _navigateToEnvironmentalist() async {
+    if (await _checkConnectivity()) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const Environmentalist()),
+      );
+    } else {
+      _showToast("You are offline!");
+      return;
+    }
   }
 
   Future<void> _initializeApp() async {
@@ -105,6 +114,16 @@ class _ChooseModeState extends State<ChooseModeHome> {
       toastLength: Toast.LENGTH_SHORT,
       gravity: ToastGravity.BOTTOM,
       backgroundColor: const Color(0xFFB43838),
+      textColor: Colors.white,
+    );
+  }
+
+  void _showToast(String message) {
+    Fluttertoast.showToast(
+      msg: message,
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+      backgroundColor: Colors.black,
       textColor: Colors.white,
     );
   }
@@ -140,12 +159,7 @@ class _ChooseModeState extends State<ChooseModeHome> {
                   children: [
                     GestureDetector(
                       onTap: () => {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const Environmentalist(),
-                          ),
-                        ),
+                        _navigateToEnvironmentalist(),
                       },
                       child: ClipRRect(
                         child: Image.asset(

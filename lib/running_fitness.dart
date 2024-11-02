@@ -1,7 +1,5 @@
 // ignore_for_file: deprecated_member_use
 
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -48,9 +46,8 @@ class RunningCounterHomeFitness extends StatefulWidget {
 class RunningCounterHomeStateFitness extends State<RunningCounterHomeFitness>
     with WidgetsBindingObserver {
   bool _isCounting = false;
-  final double _sensitivity = 6;
+  final double _sensitivity = 10;
   double _lastMagnitude = 0;
-  int _dailyRunningSteps = 0;
   int _runningSteps = 0;
   int _totalSteps = 0;
   int _totalRunningSteps = 0;
@@ -62,7 +59,6 @@ class RunningCounterHomeStateFitness extends State<RunningCounterHomeFitness>
   bool _isRunningGoalActive = false;
   String _runningGoal = '0';
   String _runningGoalEndDate = '';
-  Map<String, int> _runningStepHistory = {};
 
   @override
   void initState() {
@@ -90,7 +86,6 @@ class RunningCounterHomeStateFitness extends State<RunningCounterHomeFitness>
     try {
       _prefs = await SharedPreferences.getInstance();
       _loadDataFromLocalStorage();
-      _checkAndResetDailySteps();
       await _checkGoalCompletion();
       setState(() {
         _currentDate = DateTime.now();
@@ -108,14 +103,6 @@ class RunningCounterHomeStateFitness extends State<RunningCounterHomeFitness>
       _isRunningGoalActive = _prefs.getBool('isRunningGoalActive') ?? false;
       _runningGoal = _prefs.getString('runningGoal') ?? '0';
       _runningGoalEndDate = _prefs.getString('runningGoalEndDate') ?? '';
-      String? runningStepHistoryJson = _prefs.getString('runningStepHistory');
-      if (runningStepHistoryJson != null) {
-        Map<String, dynamic> decodedMap = json.decode(runningStepHistoryJson);
-        _runningStepHistory =
-            decodedMap.map((key, value) => MapEntry(key, value as int));
-      } else {
-        _runningStepHistory = {};
-      }
     });
   }
 
@@ -126,17 +113,6 @@ class RunningCounterHomeStateFitness extends State<RunningCounterHomeFitness>
     await _prefs.setString('runningGoalEndDate', _runningGoalEndDate);
     await _prefs.setInt('totalSteps', _totalSteps);
     await _prefs.setInt('totalRunningSteps', _totalRunningSteps);
-    await _prefs.setInt('dailyRunningSteps', _dailyRunningSteps);
-    await _prefs.setString(
-        'runningStepHistory', json.encode(_runningStepHistory));
-    await _prefs.setString('lastRunningRecordedDay',
-        DateFormat('yyyy-MM-dd').format(DateTime.now()));
-  }
-
-  void _updateStepHistory() {
-    String today = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    _runningStepHistory[today] = (_runningStepHistory[today] ?? 0) + 1;
-    _saveDataToLocalStorage();
   }
 
   void _selectDate(BuildContext context) async {
@@ -200,8 +176,6 @@ class RunningCounterHomeStateFitness extends State<RunningCounterHomeFitness>
   }
 
   void _countSteps(UserAccelerometerEvent event) {
-    _checkAndResetDailySteps();
-
     double magnitude =
         sqrt(event.x * event.x + event.y * event.y + event.z * event.z);
     DateTime currentTime = DateTime.now();
@@ -211,16 +185,13 @@ class RunningCounterHomeStateFitness extends State<RunningCounterHomeFitness>
         timeDiff.inMilliseconds > 300 &&
         magnitude - _lastMagnitude > 1.4) {
       setState(() {
-        _dailyRunningSteps++;
         _runningSteps++;
         _totalSteps++;
         _totalRunningSteps++;
-        _updateStepHistory();
         _updateRunningSteps(
           _runningSteps,
           _totalSteps,
           _totalRunningSteps,
-          _dailyRunningSteps,
         );
       });
       _lastStepTime = currentTime;
@@ -238,11 +209,10 @@ class RunningCounterHomeStateFitness extends State<RunningCounterHomeFitness>
     _lastMagnitude = magnitude;
   }
 
-  Future<void> _updateRunningSteps(int newStepCount, int totalStepCount,
-      int totalRunningSteps, int dailyRunningSteps) async {
+  Future<void> _updateRunningSteps(
+      int newStepCount, int totalStepCount, int totalRunningSteps) async {
     await _prefs.setInt('runningSteps', newStepCount);
     await _prefs.setInt('totalSteps', totalStepCount);
-    await _prefs.setInt('dailyRunningSteps', dailyRunningSteps);
     await _prefs.setInt('totalRunningSteps', totalRunningSteps);
   }
 
@@ -262,26 +232,6 @@ class RunningCounterHomeStateFitness extends State<RunningCounterHomeFitness>
         _saveDataToLocalStorage();
         _showToast("Congratulations! You've completed your running goal!");
       }
-    }
-  }
-
-  void _checkAndResetDailySteps() {
-    String today = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    String lastRecordedDay = _prefs.getString('lastRunningRecordedDay') ?? '';
-
-    if (today != lastRecordedDay) {
-      // It's a new day, reset the running steps
-      _dailyRunningSteps = 0;
-      _prefs.setInt('dailyRunningSteps', 0);
-      _prefs.setString('lastRunningRecordedDay', today);
-
-      // Ensure there's an entry for today in the history
-      if (!_runningStepHistory.containsKey(today)) {
-        _runningStepHistory[today] = 0;
-      }
-
-      // Save the updated history
-      _saveDataToLocalStorage();
     }
   }
 
