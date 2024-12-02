@@ -38,86 +38,137 @@ class CreateEditPostPageState extends State<CreateEditPostPage> {
   }
 
   Future<void> _pickImage(ImageSource source) async {
-    final pickedFile = await _imagePicker.pickImage(source: source);
-    if (pickedFile != null) {
+    try {
+      final pickedFile = await _imagePicker.pickImage(source: source);
+      if (pickedFile != null) {
+        setState(() {
+          _isProcessingImage = true;
+        });
+
+        // Create a unique filename for each captured image
+        final timestamp = DateTime.now().millisecondsSinceEpoch;
+        final tempDir = await getTemporaryDirectory();
+
+        // Process image with error handling
+        File? processedImage;
+        try {
+          final compressedImage = await compressImage(
+            File(pickedFile.path),
+            '${tempDir.path}/compressed_$timestamp.jpg',
+          );
+
+          if (compressedImage != null) {
+            final watermarkedImage = await _addWatermark(
+              compressedImage,
+              '${tempDir.path}/watermarked_$timestamp.png',
+            );
+            processedImage = watermarkedImage;
+          }
+        } catch (e) {
+          // Show error toast
+          Fluttertoast.showToast(
+            msg: "Error processing image. Please try again.",
+            backgroundColor: Colors.red,
+          );
+        }
+
+        // Only update state if image processing was successful
+        if (processedImage != null) {
+          setState(() {
+            _image = processedImage;
+          });
+        }
+
+        setState(() {
+          _isProcessingImage = false;
+        });
+      }
+    } catch (e) {
       setState(() {
-        _isProcessingImage = true;
-      });
-      final compressedImage = await compressImage(File(pickedFile.path));
-      final watermarkedImage = await _addWatermark(compressedImage);
-      setState(() {
-        _image = watermarkedImage;
         _isProcessingImage = false;
       });
+      Fluttertoast.showToast(
+        msg: "Error selecting image. Please try again.",
+        backgroundColor: Colors.red,
+      );
     }
   }
 
-  Future<File> compressImage(File file) async {
-    final dir = await getTemporaryDirectory();
-    final targetPath = '${dir.absolute.path}/temp_compressed.jpg';
+  Future<File?> compressImage(File file, String targetPath) async {
+    try {
+      var result = await FlutterImageCompress.compressAndGetFile(
+        file.absolute.path,
+        targetPath,
+        quality: 88,
+        minWidth: 1024,
+        minHeight: 1024,
+      );
 
-    var result = await FlutterImageCompress.compressAndGetFile(
-      file.absolute.path,
-      targetPath,
-      quality: 88,
-      minWidth: 1024,
-      minHeight: 1024,
-    );
-
-    return File(result!.path);
+      return result != null ? File(result.path) : null;
+    } catch (e) {
+      return null;
+    }
   }
 
-  Future<File> _addWatermark(File image) async {
-    final ui.Image originalImage = await _loadImage(image);
-    final recorder = ui.PictureRecorder();
-    final canvas = Canvas(recorder);
+  Future<File?> _addWatermark(File image, String outputPath) async {
+    try {
+      final ui.Image originalImage = await _loadImage(image);
+      final recorder = ui.PictureRecorder();
+      final canvas = Canvas(recorder);
 
-    canvas.drawImage(originalImage, Offset.zero, Paint());
+      // Draw original image
+      canvas.drawImage(originalImage, Offset.zero, Paint());
 
-    final watermarkText = 'treestride/${widget.username}';
-    final imageWidth = originalImage.width.toDouble();
-    final imageHeight = originalImage.height.toDouble();
+      final watermarkText = 'treestride/${widget.username}';
+      final imageWidth = originalImage.width.toDouble();
+      final imageHeight = originalImage.height.toDouble();
 
-    // Calculate font size based on image dimensions
-    final baseFontSize = (imageWidth + imageHeight) / 100;
-    final fontSize = baseFontSize.clamp(16.0, 48.0); // Min 16, Max 48
+      // Calculate font size based on image dimensions
+      final baseFontSize = (imageWidth + imageHeight) / 100;
+      final fontSize = baseFontSize.clamp(16.0, 48.0);
 
-    final textPainter = TextPainter(
-      text: TextSpan(
-        text: watermarkText,
-        style: GoogleFonts.exo2(
-          color: Colors.white,
-          fontSize: fontSize,
-          fontWeight: FontWeight.bold,
-          shadows: const [
-            Shadow(
-              blurRadius: 2,
-              color: Colors.black,
-              offset: Offset(1, 1),
-            ),
-          ],
+      final textPainter = TextPainter(
+        text: TextSpan(
+          text: watermarkText,
+          style: GoogleFonts.exo2(
+            color: Colors.white,
+            fontSize: fontSize,
+            fontWeight: FontWeight.bold,
+            shadows: const [
+              Shadow(
+                blurRadius: 2,
+                color: Colors.black,
+                offset: Offset(1, 1),
+              ),
+            ],
+          ),
         ),
-      ),
-      textDirection: TextDirection.ltr,
-    );
-    textPainter.layout();
+        textDirection: TextDirection.ltr,
+      );
+      textPainter.layout();
 
-    final position = Offset(
-      (imageWidth - textPainter.width) / 2,
-      // 5% padding from bottom
-      imageHeight - textPainter.height - (imageHeight * 0.05),
-    );
-    textPainter.paint(canvas, position);
+      final position = Offset(
+        (imageWidth - textPainter.width) / 2,
+        imageHeight - textPainter.height - (imageHeight * 0.05),
+      );
+      textPainter.paint(canvas, position);
 
-    final picture = recorder.endRecording();
-    final img = await picture.toImage(imageWidth.toInt(), imageHeight.toInt());
-    final pngBytes = await img.toByteData(format: ui.ImageByteFormat.png);
+      final picture = recorder.endRecording();
+      final img = await picture.toImage(
+        imageWidth.toInt(),
+        imageHeight.toInt(),
+      );
+      final pngBytes = await img.toByteData(format: ui.ImageByteFormat.png);
 
-    final tempDir = await getTemporaryDirectory();
-    final tempFile = File('${tempDir.path}/watermarked_image.png');
-    await tempFile.writeAsBytes(pngBytes!.buffer.asUint8List());
-
-    return tempFile;
+      if (pngBytes != null) {
+        final outputFile = File(outputPath);
+        await outputFile.writeAsBytes(pngBytes.buffer.asUint8List());
+        return outputFile;
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
   }
 
   Future<ui.Image> _loadImage(File file) async {

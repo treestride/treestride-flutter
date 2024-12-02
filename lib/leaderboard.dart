@@ -132,6 +132,7 @@ class LeaderboardHomeState extends State<LeaderboardHome> {
           backgroundColor: const Color(0xFFEFEFEF),
           appBar: AppBar(
             elevation: 2,
+            automaticallyImplyLeading: false,
             backgroundColor: const Color(0xFFFEFEFE),
             shadowColor: Colors.grey.withOpacity(0.5),
             centerTitle: true,
@@ -234,7 +235,7 @@ class LeaderboardListState extends State<LeaderboardList> {
         if (_users.isNotEmpty) _buildTopThree(),
         Expanded(
           child: ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+            padding: const EdgeInsets.only(top: 14, left: 14, right: 14),
             itemCount: _users.length + (_hasMore ? 1 : 0),
             itemBuilder: (context, index) {
               if (index < _users.length) {
@@ -255,27 +256,31 @@ class LeaderboardListState extends State<LeaderboardList> {
   }
 
   Widget _buildTopThree() {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 14),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Colors.blue.shade100, Colors.white],
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Colors.blue.shade100, Colors.white],
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              if (_users.length > 1)
+                _buildTopUserWidget(_users[1], 2, Colors.grey.shade300),
+              if (_users.isNotEmpty)
+                _buildTopUserWidget(_users[0], 1, Colors.amber),
+              if (_users.length > 2)
+                _buildTopUserWidget(_users[2], 3, Colors.brown.shade300),
+            ],
+          ),
         ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          if (_users.length > 1)
-            _buildTopUserWidget(_users[1], 2, Colors.grey.shade300),
-          if (_users.isNotEmpty)
-            _buildTopUserWidget(_users[0], 1, Colors.amber),
-          if (_users.length > 2)
-            _buildTopUserWidget(_users[2], 3, Colors.brown.shade300),
-        ],
-      ),
+      ],
     );
   }
 
@@ -404,39 +409,42 @@ class LeaderboardListState extends State<LeaderboardList> {
   }
 
   Widget _buildLoadMoreIndicator() {
-    return Center(
-      child: _isLoading
-          ? const CircularProgressIndicator(
-              color: Color(0xFF08DAD6),
-              strokeWidth: 6,
-            )
-          : Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(14.0),
-                  child: ElevatedButton(
-                    onPressed: _loadMoreUsers,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF08DAD6),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 12,
+    return Padding(
+      padding: const EdgeInsets.all(14.0),
+      child: Center(
+        child: _isLoading
+            ? const CircularProgressIndicator(
+                color: Color(0xFF08DAD6),
+                strokeWidth: 6,
+              )
+            : Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(14.0),
+                    child: ElevatedButton(
+                      onPressed: _loadMoreUsers,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF08DAD6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: const Text(
-                      'Load More',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.black,
+                      child: const Text(
+                        'Load More',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.black,
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
+      ),
     );
   }
 }

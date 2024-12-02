@@ -672,11 +672,19 @@ class WalkingCounterHomeStateFitness extends State<WalkingCounterHomeFitness>
   }
 
   void _resetGoal() {
+    if (_isCounting) {
+      _showToast("Please stop counting before resetting");
+      return;
+    }
+    if (_isCounting) {
+      _stopCounting();
+    }
     setState(() {
       _isWalkingGoalActive = false;
       _walkingSteps = 0;
       _walkingGoal = '0';
       _walkingGoalEndDate = '';
+      _selectedDate = DateTime.now();
     });
     _saveDataToLocalStorage();
     _showToast("Goal Reset!");

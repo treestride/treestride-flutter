@@ -83,6 +83,7 @@ class UserDataProvider with ChangeNotifier {
           Timestamp.fromDate(DateTime(2000)),
       'lastPostViewTime':
           data['lastPostViewTime'] ?? Timestamp.fromDate(DateTime(2000)),
+      'fromPangasinan': data['fromPangasinan']?.toString() ?? "false",
     };
   }
 
@@ -171,7 +172,6 @@ class UserDataProvider with ChangeNotifier {
     _userData!['${type}Goal'] = goal;
     _userData!['is${type.capitalize()}GoalActive'] = 'true';
     _userData!['${type}GoalEndDate'] = DateFormat('yyyy-MM-dd').format(endDate);
-    _dataChanged = true;
     _dataChanged = true;
     notifyListeners();
     await saveDataToFirestore();

@@ -73,7 +73,8 @@ class ProfileFitnessHomeState extends State<ProfileFitnessHome>
         ),
       );
     } else {
-      _showToast("You are offline!");
+      _showToast(
+            "You are offline! Please ensure that you are connected to an active internet!");
       return;
     }
 

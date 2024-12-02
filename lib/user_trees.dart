@@ -11,6 +11,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'bottom_navigation.dart';
 import 'offline.dart';
+import 'tree_gallery.dart';
 
 class PlantedTrees extends StatefulWidget {
   const PlantedTrees({super.key});
@@ -249,8 +250,8 @@ class PlantedTreesState extends State<PlantedTrees> {
             child: Image.network(
               request['treeImage'] ?? '',
               fit: BoxFit.cover,
-              width: 120,
-              height: 180,
+              width: 140,
+              height: 220,
             ),
           ),
           Expanded(
@@ -303,6 +304,36 @@ class PlantedTreesState extends State<PlantedTrees> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
+                  const SizedBox(height: 8),
+                  if (isApproved)
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => TreePictureUploadPage(
+                                plantRequestId: request.containsKey('id')
+                                    ? request['id']
+                                    : '', // Ensure you have a unique identifier
+                                treeName: request['treeName'] ?? 'Unknown Tree',
+                              ),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          backgroundColor: const Color(0xFF08DAD6),
+                        ),
+                        child: const Text(
+                          "VIEW GALLERY",
+                          style: TextStyle(color: Colors.black),
+                        ),
+                      ),
+                    ),
                   const SizedBox(height: 8),
                   SizedBox(
                     width: double.infinity,

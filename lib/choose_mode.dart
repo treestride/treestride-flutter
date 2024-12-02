@@ -1,10 +1,10 @@
 // ignore_for_file: unrelated_type_equality_checks, use_build_context_synchronously
 
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
@@ -47,6 +47,7 @@ class ChooseModeHome extends StatefulWidget {
 
 class _ChooseModeState extends State<ChooseModeHome> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -77,14 +78,25 @@ class _ChooseModeState extends State<ChooseModeHome> {
   }
 
   void _navigateToEnvironmentalist() async {
-    if (await _checkConnectivity()) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const Environmentalist()),
-      );
+    // Check if the user is from Pangasinan
+    final provider = Provider.of<UserDataProvider>(context, listen: false);
+    String fromPangasinan = provider.userData?['fromPangasinan'] ?? 'false';
+
+    if (fromPangasinan == 'true') {
+      if (await _checkConnectivity()) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const Environmentalist()),
+        );
+      } else {
+        _showToast(
+            "You are offline! Please ensure that you are connected to an active internet!");
+        return;
+      }
     } else {
-      _showToast("You are offline!");
-      return;
+      // Show a toast or dialog indicating the mode is locked
+      _showToast(
+          "Sorry! This mode is only available for those users who lives in Pangasinan!");
     }
   }
 
@@ -97,6 +109,10 @@ class _ChooseModeState extends State<ChooseModeHome> {
       await provider.checkForNewAnnouncements();
       await provider.checkForNewPosts();
       await provider.initNotifications();
+
+      setState(() {
+        _isLoading = false;
+      });
     } catch (error) {
       _showErrorToast("Initialization error: $error");
       Future.delayed(Duration.zero, () {
@@ -108,22 +124,22 @@ class _ChooseModeState extends State<ChooseModeHome> {
     }
   }
 
-  void _showErrorToast(String message) {
-    Fluttertoast.showToast(
-      msg: message,
-      toastLength: Toast.LENGTH_SHORT,
-      gravity: ToastGravity.BOTTOM,
-      backgroundColor: const Color(0xFFB43838),
-      textColor: Colors.white,
-    );
-  }
-
   void _showToast(String message) {
     Fluttertoast.showToast(
       msg: message,
       toastLength: Toast.LENGTH_SHORT,
       gravity: ToastGravity.BOTTOM,
       backgroundColor: Colors.black,
+      textColor: Colors.white,
+    );
+  }
+
+  void _showErrorToast(String message) {
+    Fluttertoast.showToast(
+      msg: message,
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+      backgroundColor: const Color(0xFFB43838),
       textColor: Colors.white,
     );
   }
@@ -150,67 +166,74 @@ class _ChooseModeState extends State<ChooseModeHome> {
             ),
           ),
         ),
-        body: Center(
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(children: [
-                Column(
-                  children: [
-                    GestureDetector(
-                      onTap: () => {
-                        _navigateToEnvironmentalist(),
-                      },
-                      child: ClipRRect(
-                        child: Image.asset(
-                          "assets/images/planting.png",
-                          height: 200,
-                          width: 200,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    const Text(
-                      "ENVIRONMENTALIST",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    )
-                  ],
-                ),
-                const SizedBox(height: 48),
-                Column(
-                  children: [
-                    GestureDetector(
-                      onTap: () => {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const Fitness(),
+        body: _isLoading
+            ? const Center(
+                child: CircularProgressIndicator(
+                  color: Color(0xFF08DAD6),
+                  strokeWidth: 6.0,
+                ), // Show loading indicator
+              )
+            : Center(
+                child: SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(children: [
+                      Column(
+                        children: [
+                          GestureDetector(
+                            onTap: () => {
+                              _navigateToEnvironmentalist(),
+                            },
+                            child: ClipRRect(
+                              child: Image.asset(
+                                "assets/images/planting.png",
+                                height: 200,
+                                width: 200,
+                              ),
+                            ),
                           ),
-                        ),
-                      },
-                      child: ClipRRect(
-                        child: Image.asset(
-                          "assets/images/fitness.png",
-                          height: 200,
-                          width: 200,
-                        ),
+                          const SizedBox(height: 14),
+                          const Text(
+                            "ENVIRONMENTALIST",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          )
+                        ],
                       ),
-                    ),
-                    const SizedBox(height: 14),
-                    const Text(
-                      "FITNESS ENTHUSIAST",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
+                      const SizedBox(height: 48),
+                      Column(
+                        children: [
+                          GestureDetector(
+                            onTap: () => {
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const Fitness(),
+                                ),
+                              ),
+                            },
+                            child: ClipRRect(
+                              child: Image.asset(
+                                "assets/images/fitness.png",
+                                height: 200,
+                                width: 200,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          const Text(
+                            "FITNESS ENTHUSIAST",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          )
+                        ],
                       ),
-                    )
-                  ],
+                    ]),
+                  ),
                 ),
-              ]),
-            ),
-          ),
-        ),
+              ),
       ),
     );
   }

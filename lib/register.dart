@@ -38,6 +38,7 @@ class RegisterPageState extends State<Register> {
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  bool _fromPangasinan = false;
 
   @override
   void initState() {
@@ -234,6 +235,7 @@ class RegisterPageState extends State<Register> {
             'isMissionCompleted': 'false',
             'lastAnnouncementViewTime': Timestamp.fromDate(DateTime(2000)),
             'lastPostViewTime': Timestamp.fromDate(DateTime(2000)),
+            'fromPangasinan': _fromPangasinan.toString(),
           },
         );
 
@@ -467,11 +469,34 @@ class RegisterPageState extends State<Register> {
                       TextFormField(
                         decoration: _inputDecoration('Password'),
                         obscureText: _obscurePassword,
-                        validator: (value) => value == null || value.isEmpty
-                            ? 'Please enter your password'
-                            : (value.length < 6
-                                ? 'Password must be at least 6 characters long'
-                                : null),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter your password';
+                          }
+
+                          // Check total length is exactly 8 characters
+                          if (value.length < 8) {
+                            return 'Password must be at least 8 characters long';
+                          }
+
+                          // Check for at least one uppercase letter
+                          if (!value.contains(RegExp(r'[A-Z]'))) {
+                            return 'Password must contain at least one capital letter';
+                          }
+
+                          // Check for at least one special character
+                          if (!value
+                              .contains(RegExp(r'[!@#$%^&*()_,.?":{}|<>]'))) {
+                            return 'Password must contain at least one special character';
+                          }
+
+                          // Check for at least one number
+                          if (!value.contains(RegExp(r'[0-9]'))) {
+                            return 'Password must contain at least one number';
+                          }
+
+                          return null;
+                        },
                         onChanged: (value) => _password = value,
                         autovalidateMode: AutovalidateMode.onUserInteraction,
                       ),
@@ -486,6 +511,27 @@ class RegisterPageState extends State<Register> {
                                 : null),
                         onChanged: (value) => _confirmPassword = value,
                         autovalidateMode: AutovalidateMode.onUserInteraction,
+                      ),
+                      const SizedBox(height: 14),
+                      Row(
+                        children: [
+                          Checkbox(
+                            value: _fromPangasinan,
+                            onChanged: (bool? value) {
+                              setState(() {
+                                _fromPangasinan = value ?? false;
+                              });
+                            },
+                            activeColor: const Color(0xFF08DAD6),
+                          ),
+                          const Text(
+                            'I am from Pangasinan',
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 14),
                       SizedBox(
@@ -508,7 +554,6 @@ class RegisterPageState extends State<Register> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 14),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [

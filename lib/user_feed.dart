@@ -47,11 +47,11 @@ class UserFeedPageState extends State<UserFeedPage>
     WidgetsBinding.instance.addObserver(this);
     _connectivityStream = Connectivity().onConnectivityChanged;
     _checkConnection();
-    _loadPosts();
     _postViewed();
-    // Listen to user data changes
-    Provider.of<UserDataProvider>(context, listen: false)
-        .addListener(_onUserDataChanged);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<UserDataProvider>(context, listen: false)
+          .addListener(_onUserDataChanged);
+    });
   }
 
   @override
@@ -96,39 +96,32 @@ class UserFeedPageState extends State<UserFeedPage>
     final postRef = _firestore.collection('posts').doc(postId);
 
     try {
-      await _firestore.runTransaction((transaction) async {
-        final postSnapshot = await transaction.get(postRef);
-        if (!postSnapshot.exists) {
-          throw Exception('Post does not exist!');
-        }
+      final postIndex = _posts.indexWhere((post) => post.id == postId);
+      if (postIndex == -1) return;
 
-        final postData = postSnapshot.data() as Map<String, dynamic>;
-        final List<String> likes = List<String>.from(postData['likes'] ?? []);
+      final postData = _posts[postIndex].data() as Map<String, dynamic>;
+      if (postData['userId'] == currentUserId) {
+        _showToast('You cannot like your own post');
+        return;
+      }
 
-        if (postData['userId'] == currentUserId) {
-          // User is trying to like their own post
-          _showToast('You cannot like your own post');
+      final List<String> likes = List<String>.from(postData['likes'] ?? []);
+      final bool isLiked = likes.contains(currentUserId);
 
-          return;
-        }
-
-        if (likes.contains(currentUserId)) {
-          // User has already liked the post, so unlike it
-          likes.remove(currentUserId);
-        } else {
-          // User hasn't liked the post, so add the like
-          likes.add(currentUserId);
-        }
-
-        transaction.update(postRef, {'likes': likes});
+      // Update Firestore
+      await postRef.update({
+        'likes': isLiked
+            ? FieldValue.arrayRemove([currentUserId])
+            : FieldValue.arrayUnion([currentUserId])
       });
 
-      // Refresh the posts to reflect the updated like status
-      setState(() {
-        _posts.clear();
-        _lastDocument = null;
-      });
-      await _loadPosts();
+      // Update local state
+      final updatedSnapshot = await postRef.get();
+      if (mounted) {
+        setState(() {
+          _posts[postIndex] = updatedSnapshot;
+        });
+      }
     } catch (e) {
       _showErrorToast('Error updating like: $e');
     }
@@ -189,7 +182,6 @@ class UserFeedPageState extends State<UserFeedPage>
     final postRef = _firestore.collection('posts').doc(postId);
 
     try {
-      // Fetch the current user's data to get the username
       final userDoc =
           await _firestore.collection('users').doc(currentUserId).get();
       final userData = userDoc.data() as Map<String, dynamic>;
@@ -199,7 +191,6 @@ class UserFeedPageState extends State<UserFeedPage>
         throw Exception('Username not found for the current user');
       }
 
-      // First check if the post exists and if it's already been reported
       final postDoc = await postRef.get();
       if (!postDoc.exists) {
         _showToast('This post no longer exists!');
@@ -208,13 +199,11 @@ class UserFeedPageState extends State<UserFeedPage>
 
       final postData = postDoc.data() as Map<String, dynamic>;
 
-      // Check if post has already been reported and processed
       if (postData['isReported'] == true) {
         _showToast('This post has already been reported!');
         return;
       }
 
-      // Check if the user has already reported this post
       final existingReportQuery = await _firestore
           .collection('reported_posts')
           .where('postId', isEqualTo: postId)
@@ -226,17 +215,14 @@ class UserFeedPageState extends State<UserFeedPage>
         return;
       }
 
-      // Perform the report operation in a transaction
       await _firestore.runTransaction((transaction) async {
         final freshPostSnapshot = await transaction.get(postRef);
         final freshPostData = freshPostSnapshot.data() as Map<String, dynamic>;
 
-        // Double check if post hasn't been reported during our operation
         if (freshPostData['isReported'] == true) {
           throw Exception('Post was already reported!');
         }
 
-        // Add to reported_posts collection
         final reportDoc = _firestore.collection('reported_posts').doc();
         transaction.set(reportDoc, {
           'postId': postId,
@@ -249,22 +235,29 @@ class UserFeedPageState extends State<UserFeedPage>
           'posterPhotoURL': freshPostData['photoURL'],
         });
 
-        // Update the post to mark it as reported
         transaction.update(postRef, {
           'isReported': true,
           'reportedAt': FieldValue.serverTimestamp(),
           'reportedBy': username,
         });
+
+        // Update local state
+        setState(() {
+          final postIndex = _posts.indexWhere((post) => post.id == postId);
+          if (postIndex != -1) {
+            // Get the latest post data after the update
+            postRef.get().then((updatedSnapshot) {
+              if (mounted) {
+                setState(() {
+                  _posts[postIndex] = updatedSnapshot;
+                });
+              }
+            });
+          }
+        });
       });
 
       _showToast('Post reported successfully!');
-
-      // Refresh the posts to reflect the updated report status
-      setState(() {
-        _posts.clear();
-        _lastDocument = null;
-      });
-      await _loadPosts();
     } catch (e) {
       if (e.toString().contains('Post was already reported!')) {
         _showToast('This post has already been reported!');

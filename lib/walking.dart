@@ -603,8 +603,14 @@ class WalkingCounterHomeState extends State<WalkingCounterHome>
 
   void _showResetConfirmationDialog(
       BuildContext context, UserDataProvider userDataProvider) {
+    // Don't show dialog if counting is active
+    if (_isCounting) {
+      _showToast("Please stop counting before resetting");
+      return;
+    }
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
           actionsAlignment: MainAxisAlignment.spaceAround,
@@ -644,7 +650,16 @@ class WalkingCounterHomeState extends State<WalkingCounterHome>
                 ),
               ),
               onPressed: () {
+                if (_isCounting) {
+                  _stopCounting();
+                }
                 userDataProvider.resetGoal('walking');
+                setState(() {
+                  _walkingSteps = 0;
+                  _lastMagnitude = 0;
+                  _lastStepTime = DateTime.now();
+                  _selectedDate = DateTime.now();
+                });
                 Navigator.of(context).pop();
               },
             ),

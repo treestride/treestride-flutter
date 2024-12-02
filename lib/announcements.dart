@@ -2,6 +2,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:intl/intl.dart';
@@ -159,6 +160,7 @@ class AnnouncementPageState extends State<AnnouncementPage> {
           backgroundColor: const Color(0xFFEFEFEF),
           appBar: AppBar(
             elevation: 2.0,
+            automaticallyImplyLeading: false,
             backgroundColor: const Color(0xFFFEFEFE),
             shadowColor: Colors.grey.withOpacity(0.5),
             leading: IconButton(
@@ -270,15 +272,41 @@ class AnnouncementCard extends StatelessWidget {
     if (announcement.location != null) {
       final lat = announcement.location!.latitude;
       final lng = announcement.location!.longitude;
-      final url = Uri.parse(
-          'https://www.google.com/maps/search/?api=1&query=$lat,$lng');
 
-      if (await canLaunchUrl(url)) {
-        await launchUrl(url);
-      } else {
-        throw 'Could not launch $url';
+      // Try multiple URL formats for better compatibility
+      final urlStrings = [
+        'geo:$lat,$lng', // Geo URI scheme
+        'https://www.google.com/maps/search/?api=1&query=$lat,$lng', // Google Maps web URL
+        'https://maps.google.com/maps?q=$lat,$lng' // Alternative Google Maps URL
+      ];
+
+      for (final urlString in urlStrings) {
+        final url = Uri.parse(urlString);
+        try {
+          if (await canLaunchUrl(url)) {
+            await launchUrl(
+              url,
+              mode: LaunchMode.externalApplication, // Force external app launch
+            );
+            return; // Exit after successful launch
+          }
+        } catch (e) {
+          _showToast('Could not launch $urlString: $e');
+          // Continue to next URL if one fails
+        }
       }
+      _showToast("Could not open map");
     }
+  }
+
+  void _showToast(String message) {
+    Fluttertoast.showToast(
+      msg: message,
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+      backgroundColor: Colors.black,
+      textColor: Colors.white,
+    );
   }
 
   @override

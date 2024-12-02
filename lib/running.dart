@@ -603,6 +603,10 @@ class RunningCounterHomeState extends State<RunningCounterHome>
 
   void _showResetConfirmationDialog(
       BuildContext context, UserDataProvider userDataProvider) {
+        if (_isCounting) {
+      _showToast("Please stop counting before resetting");
+      return;
+    }
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -644,7 +648,16 @@ class RunningCounterHomeState extends State<RunningCounterHome>
                 ),
               ),
               onPressed: () {
+                if (_isCounting) {
+      _stopCounting();
+    }
                 userDataProvider.resetGoal('running');
+                setState(() {
+                  _runningSteps = 0;
+                  _lastMagnitude = 0;
+                  _lastStepTime = DateTime.now();
+                  _selectedDate = DateTime.now();
+                });
                 Navigator.of(context).pop();
               },
             ),

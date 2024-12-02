@@ -84,14 +84,24 @@ class FitnessState extends State<FitnessMode> {
   }
 
   void _navigateToEnvironmentalist() async {
-    if (await _checkConnectivity()) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const Environmentalist()),
-      );
+    // Check if the user is from Pangasinan
+    final provider = Provider.of<UserDataProvider>(context, listen: false);
+    String fromPangasinan = provider.userData?['fromPangasinan'] ?? 'false';
+
+    if (fromPangasinan == 'true') {
+      if (await _checkConnectivity()) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const Environmentalist()),
+        );
+      } else {
+        _showToast(
+            "You are offline! Please ensure that you are connected to an active internet!");
+        return;
+      }
     } else {
-      _showToast("You are offline!");
-      return;
+      _showToast(
+          "Sorry! This mode is only available for those users who lives in Pangasinan!");
     }
   }
 
@@ -106,7 +116,8 @@ class FitnessState extends State<FitnessMode> {
         ),
       );
     } else {
-      _showToast("You are offline!");
+      _showToast(
+          "You are offline! Please ensure that you are connected to an active internet!");
       return;
     }
   }

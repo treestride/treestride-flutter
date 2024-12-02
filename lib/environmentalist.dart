@@ -673,7 +673,7 @@ class EnvironmentalistPageState extends State<EnvironmentalistPage> {
                             Column(
                               children: [
                                 _buildMissionInfo(userDataProvider),
-                                const SizedBox(height: 24),
+                                const SizedBox(height: 14),
                                 _buildMissionProgress(userDataProvider),
                               ],
                             ),

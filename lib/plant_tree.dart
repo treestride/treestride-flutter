@@ -215,9 +215,14 @@ class TreeShopHomeState extends State<TreeShopHome> {
         });
 
         // Add plant request
+        final documentRef =
+            FirebaseFirestore.instance.collection('plant_requests').doc();
+        final documentId = documentRef.id;
+
         transaction.set(
-          FirebaseFirestore.instance.collection('plant_requests').doc(),
+          documentRef,
           {
+            'id': documentId,
             'timestamp': FieldValue.serverTimestamp(),
             'userId': FirebaseAuth.instance.currentUser!.uid,
             'username': userData['username'],
