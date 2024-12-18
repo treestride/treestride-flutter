@@ -62,7 +62,8 @@ class _ChooseModeState extends State<ChooseModeHome> {
     await [
       Permission.storage,
       Permission.activityRecognition,
-      Permission.camera
+      Permission.camera,
+      Permission.location,
     ].request();
   }
 
@@ -105,10 +106,10 @@ class _ChooseModeState extends State<ChooseModeHome> {
     try {
       await provider.fetchUserData();
       await provider.fetchMissionData();
+      await provider.checkMissionStatus();
       await provider.checkMissionCompletion();
       await provider.checkForNewAnnouncements();
       await provider.checkForNewPosts();
-      await provider.initNotifications();
 
       setState(() {
         _isLoading = false;

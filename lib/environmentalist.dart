@@ -12,6 +12,7 @@ import 'package:treestride/running.dart';
 import 'announcements.dart';
 import 'bottom_navigation.dart';
 import 'fitness.dart';
+import 'group_mission.dart';
 import 'login.dart';
 import 'offline.dart';
 import 'walking.dart';
@@ -203,20 +204,59 @@ class EnvironmentalistPageState extends State<EnvironmentalistPage> {
             )
           ],
         ),
-        child: const Padding(
-          padding: EdgeInsets.all(14.0),
+        child: Padding(
+          padding: const EdgeInsets.all(14.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(
+              const Text(
                 "NO ACTIVE MISSION",
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
-              SizedBox(height: 14),
-              Text(
+              const SizedBox(height: 14),
+              const Text(
                 "The current mission has ended. Please check back again later.",
                 style: TextStyle(fontSize: 16),
                 textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 14),
+              SizedBox(
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.all(14),
+                    backgroundColor: const Color(0xFF08DAD6),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const GroupMissionsPage(),
+                      ),
+                    );
+                  },
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "GROUP MISSION",
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.black,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(width: 8),
+                      Icon(
+                        Icons.arrow_forward,
+                        color: Colors.black,
+                        size: 18,
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),
@@ -242,8 +282,12 @@ class EnvironmentalistPageState extends State<EnvironmentalistPage> {
         child: Column(
           children: [
             const Text(
-              "CURRENT MISSION",
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              "SOLO MISSION",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 14),
             _buildMissionInfoRow("Steps Goal:",
@@ -254,6 +298,45 @@ class EnvironmentalistPageState extends State<EnvironmentalistPage> {
             const SizedBox(height: 10),
             _buildMissionInfoRow(
                 "End Date:", provider.missionData?['endDate'] ?? 'N/A'),
+            const SizedBox(height: 14),
+            SizedBox(
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.all(14),
+                  backgroundColor: const Color(0xFF08DAD6),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const GroupMissionsPage(),
+                    ),
+                  );
+                },
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      "GROUP MISSION",
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(width: 8),
+                    Icon(
+                      Icons.arrow_forward,
+                      color: Colors.black,
+                      size: 18,
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -327,7 +410,9 @@ class EnvironmentalistPageState extends State<EnvironmentalistPage> {
           value: progress.clamp(0.0, 1.0),
           minHeight: 24,
           backgroundColor: Colors.grey[300],
-          valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF08DAD6)),
+          valueColor: const AlwaysStoppedAnimation<Color>(
+            Color(0xFF08DAD6),
+          ),
         ),
         const SizedBox(height: 24),
       ],

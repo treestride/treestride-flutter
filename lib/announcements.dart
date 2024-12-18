@@ -7,8 +7,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 
+import 'map_viewer.dart';
 import 'offline.dart';
 import 'user_data_provider.dart';
 
@@ -268,34 +268,22 @@ class AnnouncementCard extends StatelessWidget {
 
   const AnnouncementCard({super.key, required this.announcement});
 
-  void _openInGoogleMaps() async {
+  void _openFullMap(BuildContext context) async {
     if (announcement.location != null) {
       final lat = announcement.location!.latitude;
       final lng = announcement.location!.longitude;
 
-      // Try multiple URL formats for better compatibility
-      final urlStrings = [
-        'geo:$lat,$lng', // Geo URI scheme
-        'https://www.google.com/maps/search/?api=1&query=$lat,$lng', // Google Maps web URL
-        'https://maps.google.com/maps?q=$lat,$lng' // Alternative Google Maps URL
-      ];
-
-      for (final urlString in urlStrings) {
-        final url = Uri.parse(urlString);
-        try {
-          if (await canLaunchUrl(url)) {
-            await launchUrl(
-              url,
-              mode: LaunchMode.externalApplication, // Force external app launch
-            );
-            return; // Exit after successful launch
-          }
-        } catch (e) {
-          _showToast('Could not launch $urlString: $e');
-          // Continue to next URL if one fails
-        }
-      }
-      _showToast("Could not open map");
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => MapPage(
+            latitude: lat,
+            longitude: lng,
+          ),
+        ),
+      );
+    } else {
+      _showToast("Location not available for this announcement");
     }
   }
 
@@ -400,10 +388,10 @@ class AnnouncementCard extends StatelessWidget {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
-                    onPressed: _openInGoogleMaps,
+                    onPressed: () => _openFullMap(context),
                     icon: const Icon(Icons.map),
                     label: const Text(
-                      'OPEN IN GOOGLE MAP',
+                      'VIEW FULL MAP',
                       style: TextStyle(
                         color: Colors.black,
                       ),

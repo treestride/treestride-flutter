@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:treestride/user_data_provider.dart';
@@ -703,15 +702,6 @@ class TreeShopHomeState extends State<TreeShopHome> {
 
   Widget _buildButton(String label, String treeName, String treeCost,
       VoidCallback onPressed, Color treeColor) {
-    IconData iconData;
-    if (label == 'DESCRIPTION') {
-      iconData = FontAwesomeIcons.circleInfo;
-    } else if (label == 'PLANT') {
-      iconData = FontAwesomeIcons.seedling;
-    } else {
-      iconData = FontAwesomeIcons.circle;
-    }
-
     return Expanded(
       child: ElevatedButton(
         onPressed: () {
@@ -728,10 +718,11 @@ class TreeShopHomeState extends State<TreeShopHome> {
           backgroundColor: treeColor,
           foregroundColor: treeColor,
         ),
-        child: Icon(
-          iconData,
-          color: Colors.black,
-          size: 24,
+        child: Text(
+          label,
+          style: const TextStyle(
+            color: Colors.black,
+          ),
         ),
       ),
     );

@@ -6,6 +6,8 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image/image.dart' as img;
 import 'package:path_provider/path_provider.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 
 import 'image_view.dart';
 
@@ -44,7 +46,8 @@ class TreePictureUploadPageState extends State<TreePictureUploadPage> {
         treeImages = querySnapshot.docs
             .map((doc) => {
                   'imageUrl': doc['imageUrl'] as String,
-                  'uploadedAt': doc['uploadedAt'] as Timestamp
+                  'uploadedAt': doc['uploadedAt'] as Timestamp,
+                  'locationName': doc['locationName'] as String?,
                 })
             .toList();
       });
@@ -72,6 +75,14 @@ class TreePictureUploadPageState extends State<TreePictureUploadPage> {
       });
 
       try {
+        // Get the current location
+        Position position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.best,
+        );
+
+        String locationName = await _getAccurateLocationName(position);
+
+        // Compress and upload the image
         final compressedFile = await _compressImage(File(pickedFile.path));
         final user = FirebaseAuth.instance.currentUser;
         final storageRef = FirebaseStorage.instance
@@ -82,12 +93,14 @@ class TreePictureUploadPageState extends State<TreePictureUploadPage> {
         await storageRef.putFile(compressedFile);
         final imageUrl = await storageRef.getDownloadURL();
 
+        // Save image details and location to Firestore
         await FirebaseFirestore.instance.collection('tree_pictures').add({
           'plantRequestId': widget.plantRequestId,
           'imageUrl': imageUrl,
           'uploadedBy': user.uid,
           'treeName': widget.treeName,
           'uploadedAt': FieldValue.serverTimestamp(),
+          'locationName': locationName,
         });
 
         await _fetchExistingImages();
@@ -98,6 +111,200 @@ class TreePictureUploadPageState extends State<TreePictureUploadPage> {
         setState(() {
           isUploading = false;
         });
+      }
+    }
+  }
+
+  Future<String> _getAccurateLocationName(Position position) async {
+    try {
+      // Try geocoding first
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        position.latitude,
+        position.longitude,
+      );
+
+      if (placemarks.isNotEmpty) {
+        Placemark place = placemarks.first;
+        String detailedAddress = '${place.locality ?? ''}, '
+            '${place.subAdministrativeArea ?? ''}, '
+            '${place.country ?? ''}';
+
+        // Remove any empty segments and trim
+        detailedAddress = detailedAddress
+            .split(',')
+            .where((segment) => segment.trim().isNotEmpty)
+            .join(', ')
+            .trim();
+
+        return detailedAddress.isNotEmpty
+            ? detailedAddress
+            : 'Unknown Location';
+      }
+    } catch (e) {
+      _showErrorSnackBar('Location capture error: $e');
+    }
+
+    return 'Unknown Location';
+  }
+
+  void _deleteImage(String imageUrl) async {
+    // Show confirmation dialog before deleting
+    bool? confirmDelete = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        actionsAlignment: MainAxisAlignment.spaceAround,
+        title: const Text(
+          'Delete Image',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 24,
+            color: Colors.black,
+          ),
+        ),
+        content: const Text(
+          'Are you sure you want to delete this image?',
+          textAlign: TextAlign.center,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel', style: TextStyle(color: Colors.black)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(
+              backgroundColor: const Color(0xFFB43838),
+              foregroundColor: const Color(0xFFB43838),
+              surfaceTintColor: const Color(0xFFB43838),
+            ),
+            child: const Text('Delete', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    // Only proceed with deletion if user confirms
+    if (confirmDelete == true) {
+      try {
+        // Find and delete the document with this imageUrl
+        final querySnapshot = await FirebaseFirestore.instance
+            .collection('tree_pictures')
+            .where('imageUrl', isEqualTo: imageUrl)
+            .get();
+
+        for (var doc in querySnapshot.docs) {
+          await doc.reference.delete();
+        }
+
+        // Remove from Firebase Storage
+        await FirebaseStorage.instance.refFromURL(imageUrl).delete();
+
+        // Refresh the list
+        await _fetchExistingImages();
+        _showSuccessSnackBar('Image deleted successfully');
+      } catch (e) {
+        _showErrorSnackBar('Error deleting image: $e');
+      }
+    }
+  }
+
+  Future<void> _postImage(String imageUrl) async {
+    // Create a text controller for the caption input
+    final TextEditingController captionController = TextEditingController();
+
+    // Show dialog with caption input
+    bool? confirmPost = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text(
+          'Post Image',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 24,
+            color: Colors.black,
+          ),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              maxLines: 3,
+              controller: captionController,
+              decoration: InputDecoration(
+                hintText: 'Have something to say? (optional)',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(4),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF08DAD6),
+                    width: 1,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(4),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF08DAD6),
+                    width: 1,
+                  ),
+                ),
+              ),
+              maxLength: 200,
+            ),
+          ],
+        ),
+        actionsAlignment: MainAxisAlignment.spaceAround,
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel', style: TextStyle(color: Colors.black)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(
+              backgroundColor: const Color(0xFF08DAD6),
+              foregroundColor: const Color(0xFF08DAD6),
+              surfaceTintColor: const Color(0xFF08DAD6),
+            ),
+            child: const Text(
+              'Post',
+              style: TextStyle(
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    // Only proceed with posting if user confirms
+    if (confirmPost == true) {
+      try {
+        final user = FirebaseAuth.instance.currentUser;
+        if (user == null) throw 'User not authenticated';
+
+        final userData = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
+
+        // Use caption if provided, otherwise default to tree name
+        String postText = captionController.text.trim().isEmpty
+            ? '${widget.treeName} picture'
+            : captionController.text.trim();
+
+        await FirebaseFirestore.instance.collection('posts').add({
+          'userId': user.uid,
+          'username': userData['username'],
+          'photoURL': userData['photoURL'],
+          'text': postText,
+          'imageUrl': imageUrl,
+          'timestamp': FieldValue.serverTimestamp(),
+          'isReported': false,
+          'likes': [],
+        });
+
+        _showSuccessSnackBar('Image posted successfully!');
+      } catch (e) {
+        _showErrorSnackBar('Error posting image: $e');
       }
     }
   }
@@ -122,134 +329,6 @@ class TreePictureUploadPageState extends State<TreePictureUploadPage> {
     );
   }
 
-  void _showImageOptionsBottomSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(14)),
-      ),
-      builder: (context) => Padding(
-        padding: const EdgeInsets.all(14.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'Choose Image Source',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 14),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildGalleryButton(context),
-                _buildCameraButton(context),
-              ],
-            ),
-            const SizedBox(height: 14),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCameraButton(BuildContext context) {
-    return Column(
-      children: [
-        IconButton(
-          icon: const Icon(Icons.camera_alt, size: 32),
-          color: Colors.black,
-          onPressed: () {
-            Navigator.pop(context);
-            _takePicture();
-          },
-        ),
-        Text('Camera', style: Theme.of(context).textTheme.bodyMedium),
-      ],
-    );
-  }
-
-  Widget _buildGalleryButton(BuildContext context) {
-    return Column(
-      children: [
-        IconButton(
-          icon: const Icon(Icons.photo_library, size: 32),
-          color: Colors.black,
-          onPressed: () {
-            Navigator.pop(context);
-            _pickImageFromGallery();
-          },
-        ),
-        Text('Gallery', style: Theme.of(context).textTheme.bodyMedium),
-      ],
-    );
-  }
-
-  Future<void> _pickImageFromGallery() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-
-    if (pickedFile != null) {
-      setState(() {
-        isUploading = true;
-      });
-
-      try {
-        final compressedFile = await _compressImage(File(pickedFile.path));
-        final user = FirebaseAuth.instance.currentUser;
-        final storageRef = FirebaseStorage.instance
-            .ref()
-            .child('tree_pictures')
-            .child('${user!.uid}_${DateTime.now().millisecondsSinceEpoch}.jpg');
-
-        await storageRef.putFile(compressedFile);
-        final imageUrl = await storageRef.getDownloadURL();
-
-        await FirebaseFirestore.instance.collection('tree_pictures').add({
-          'plantRequestId': widget.plantRequestId,
-          'imageUrl': imageUrl,
-          'uploadedBy': user.uid,
-          'treeName': widget.treeName,
-          'uploadedAt': FieldValue.serverTimestamp(),
-        });
-
-        await _fetchExistingImages();
-        _showSuccessSnackBar('Image uploaded successfully!');
-      } catch (e) {
-        _showErrorSnackBar('Error uploading image: $e');
-      } finally {
-        setState(() {
-          isUploading = false;
-        });
-      }
-    }
-  }
-
-  void _deleteImage(String imageUrl) async {
-    try {
-      // Find and delete the document with this imageUrl
-      final querySnapshot = await FirebaseFirestore.instance
-          .collection('tree_pictures')
-          .where('imageUrl', isEqualTo: imageUrl)
-          .get();
-
-      for (var doc in querySnapshot.docs) {
-        await doc.reference.delete();
-      }
-
-      // Remove from Firebase Storage
-      await FirebaseStorage.instance.refFromURL(imageUrl).delete();
-
-      // Refresh the list
-      await _fetchExistingImages();
-      _showSuccessSnackBar('Image deleted successfully');
-    } catch (e) {
-      _showErrorSnackBar('Error deleting image: $e');
-    }
-  }
-
   String _formatTimestamp(Timestamp timestamp) {
     DateTime dateTime = timestamp.toDate();
     return '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')} '
@@ -266,7 +345,7 @@ class TreePictureUploadPageState extends State<TreePictureUploadPage> {
         title: Text(
           '${widget.treeName.toUpperCase()} GALLERY',
           style: const TextStyle(
-            fontSize: 22,
+            fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -305,9 +384,9 @@ class TreePictureUploadPageState extends State<TreePictureUploadPage> {
                     padding: const EdgeInsets.all(14),
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3,
-                      crossAxisSpacing: 8,
-                      mainAxisSpacing: 8,
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 14,
+                      mainAxisSpacing: 14,
                     ),
                     itemCount: treeImages.length,
                     itemBuilder: (context, index) {
@@ -321,6 +400,8 @@ class TreePictureUploadPageState extends State<TreePictureUploadPage> {
                                   imageUrl: treeImages[index]['imageUrl'],
                                   uploadedAt: _formatTimestamp(
                                       treeImages[index]['uploadedAt']),
+                                  locationName: treeImages[index]
+                                      ['locationName'],
                                 ),
                               );
                             },
@@ -357,15 +438,35 @@ class TreePictureUploadPageState extends State<TreePictureUploadPage> {
                               ),
                             ),
                           ),
+                          Positioned(
+                            bottom: 5,
+                            right: 5,
+                            child: GestureDetector(
+                              onTap: () =>
+                                  _postImage(treeImages[index]['imageUrl']),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.blue.withOpacity(0.7),
+                                  shape: BoxShape.circle,
+                                ),
+                                padding: const EdgeInsets.all(4),
+                                child: const Icon(
+                                  Icons.send,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                              ),
+                            ),
+                          ),
                         ],
                       );
                     },
                   ),
           ),
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(14.0),
             child: ElevatedButton.icon(
-              onPressed: () => _showImageOptionsBottomSheet(context),
+              onPressed: () => _takePicture(),
               icon: const Icon(Icons.add_a_photo),
               label: const Text('Add Picture'),
               style: ElevatedButton.styleFrom(

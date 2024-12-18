@@ -7,7 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:treestride/map_viewer.dart';
 
 import 'bottom_navigation.dart';
 import 'offline.dart';
@@ -47,13 +47,16 @@ class PlantedTreesState extends State<PlantedTrees> {
     });
   }
 
-  Future<void> _launchMaps(String lat, String lng) async {
-    final url = 'https://www.google.com/maps/search/?api=1&query=$lat,$lng';
-    if (await canLaunch(url)) {
-      await launch(url);
-    } else {
-      throw 'Could not launch $url';
-    }
+  Future<void> _openMap(String lat, String lng) async {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => MapPage(
+          latitude: double.parse(lat),
+          longitude: double.parse(lng),
+        ),
+      ),
+    );
   }
 
   Future<void> _fetchUserPlantRequests() async {
@@ -238,137 +241,139 @@ class PlantedTreesState extends State<PlantedTrees> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(4),
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          ClipRRect(
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(4),
-              bottomLeft: Radius.circular(4),
-            ),
-            child: Image.network(
-              request['treeImage'] ?? '',
-              fit: BoxFit.cover,
-              width: 140,
-              height: 220,
-            ),
-          ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    request['treeName'] ?? 'Unknown Tree',
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+      child: Padding(
+        padding: const EdgeInsets.all(10.0),
+        child: Column(
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: Image.network(
+                    request['treeImage'] ?? '',
+                    fit: BoxFit.cover,
+                    width: 140,
+                    height: 140,
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    request['treeType'] ?? 'Unknown',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.black.withOpacity(0.7),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.calendar_today,
-                        size: 14,
-                        color: Color(0xFF08520B),
+                ),
+                const SizedBox(width: 10),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      request['treeName'] ?? 'Unknown Tree',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
                       ),
-                      const SizedBox(width: 4),
-                      Text(
-                        _formatDate(request['timestamp']),
-                        style: const TextStyle(
-                          fontSize: 12,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      request['treeType'] ?? 'Unknown',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.black.withOpacity(0.7),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.calendar_today,
+                          size: 14,
                           color: Color(0xFF08520B),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Planting Status: ${request['plantingStatus']}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: isApproved ? Colors.green : Colors.orange,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  if (isApproved)
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => TreePictureUploadPage(
-                                plantRequestId: request.containsKey('id')
-                                    ? request['id']
-                                    : '', // Ensure you have a unique identifier
-                                treeName: request['treeName'] ?? 'Unknown Tree',
-                              ),
-                            ),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(4),
+                        const SizedBox(width: 4),
+                        Text(
+                          _formatDate(request['timestamp']),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF08520B),
                           ),
-                          backgroundColor: const Color(0xFF08DAD6),
                         ),
-                        child: const Text(
-                          "VIEW GALLERY",
-                          style: TextStyle(color: Colors.black),
-                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'Planting Status: ${request['plantingStatus']}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isApproved ? Colors.green : Colors.orange,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                  const SizedBox(height: 8),
-                  SizedBox(
-                    width: double.infinity,
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                if (isApproved)
+                  Expanded(
                     child: ElevatedButton(
-                      onPressed: isApproved
-                          ? () {
-                              final lat = request['locationLat'];
-                              final lng = request['locationLong'];
-                              if (lat != null && lng != null) {
-                                _launchMaps(lat, lng);
-                              } else {
-                                _showToast('Location not available');
-                              }
-                            }
-                          : null, // Button is disabled when not approved
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => TreePictureUploadPage(
+                              plantRequestId: request.containsKey('id')
+                                  ? request['id']
+                                  : '',
+                              treeName: request['treeName'] ?? 'Unknown Tree',
+                            ),
+                          ),
+                        );
+                      },
                       style: ElevatedButton.styleFrom(
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(4),
                         ),
                         backgroundColor: const Color(0xFF08DAD6),
-                        disabledBackgroundColor: Colors.grey,
                       ),
-                      child: Text(
-                        "VIEW WHERE",
-                        style: TextStyle(
-                          color: isApproved ? Colors.black : Colors.white54,
-                        ),
+                      child: const Text(
+                        "GALLERY",
+                        style: TextStyle(color: Colors.black),
                       ),
                     ),
                   ),
-                ],
-              ),
-            ),
-          ),
-        ],
+                const SizedBox(width: 10),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: isApproved
+                        ? () {
+                            final lat = request['locationLat'];
+                            final lng = request['locationLong'];
+                            if (lat != null && lng != null) {
+                              _openMap(lat, lng);
+                            } else {
+                              _showToast('Location not available');
+                            }
+                          }
+                        : null, // Button is disabled when not approved
+                    style: ElevatedButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      backgroundColor: const Color(0xFF08DAD6),
+                      disabledBackgroundColor: Colors.grey,
+                    ),
+                    child: Text(
+                      "LOCATION",
+                      style: TextStyle(
+                        color: isApproved ? Colors.black : Colors.white54,
+                      ),
+                    ),
+                  ),
+                )
+              ],
+            )
+          ],
+        ),
       ),
     );
   }

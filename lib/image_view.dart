@@ -3,20 +3,27 @@ import 'package:flutter/material.dart';
 class EnhancedImageViewer extends StatelessWidget {
   final String imageUrl;
   final String uploadedAt;
+  final String locationName;
 
   const EnhancedImageViewer({
     super.key,
     required this.imageUrl,
     required this.uploadedAt,
+    required this.locationName,
   });
 
   @override
   Widget build(BuildContext context) {
     return Dialog(
       backgroundColor: Colors.transparent,
+      insetPadding: EdgeInsets.zero,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.zero,
+      ),
       child: GestureDetector(
         onTap: () => Navigator.of(context).pop(),
         child: Stack(
+          fit: StackFit.expand,
           alignment: Alignment.center,
           children: [
             Container(
@@ -91,9 +98,19 @@ class EnhancedImageViewer extends StatelessWidget {
               ),
             ),
             Positioned(
+              bottom: 40,
+              child: Text(
+                locationName,
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.7),
+                  fontSize: 14,
+                ),
+              ),
+            ),
+            Positioned(
               bottom: 20,
               child: Text(
-                'Uploaded: $uploadedAt',
+                uploadedAt,
                 style: TextStyle(
                   color: Colors.white.withOpacity(0.7),
                   fontSize: 14,

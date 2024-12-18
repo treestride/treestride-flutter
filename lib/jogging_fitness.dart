@@ -2,13 +2,12 @@
 
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:sensors_plus/sensors_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'dart:async';
-import 'dart:math';
 import 'fitness.dart';
 
 void main() {
@@ -46,24 +45,28 @@ class JoggingCounterHomeFitness extends StatefulWidget {
 class JoggingCounterHomeStateFitness extends State<JoggingCounterHomeFitness>
     with WidgetsBindingObserver {
   bool _isCounting = false;
-  final double _sensitivity = 8;
-  double _lastMagnitude = 0;
   int _joggingSteps = 0;
   int _totalSteps = 0;
   int _totalJoggingSteps = 0;
   DateTime? _selectedDate;
   DateTime _currentDate = DateTime.now();
-  DateTime _lastStepTime = DateTime.now();
-  StreamSubscription<UserAccelerometerEvent>? _accelerometerSubscription;
   late SharedPreferences _prefs;
   bool _isJoggingGoalActive = false;
   String _joggingGoal = '0';
   String _joggingGoalEndDate = '';
+  double _distanceTraveled = 0.0;
+  Position? _previousPosition;
+  StreamSubscription<Position>? _positionStreamSubscription;
+  final List<double> _distanceBuffer = [];
+  final int _bufferSize = 5; // Number of recent measurements to consider
+  int _lastValidStepCount = 0;
+  DateTime? _lastStepUpdateTime;
 
   @override
   void initState() {
     super.initState();
     _initializeData();
+    _checkLocationPermission();
     WidgetsBinding.instance.addObserver(this);
   }
 
@@ -92,6 +95,18 @@ class JoggingCounterHomeStateFitness extends State<JoggingCounterHomeFitness>
       });
     } catch (error) {
       _showErrorToast("Initialization error: $error");
+    }
+  }
+
+  Future<void> _checkLocationPermission() async {
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied ||
+        permission == LocationPermission.deniedForever) {
+      permission = await Geolocator.requestPermission();
+      if (permission != LocationPermission.whileInUse &&
+          permission != LocationPermission.always) {
+        _showErrorToast("Location permission is required to count steps.");
+      }
     }
   }
 
@@ -167,46 +182,108 @@ class JoggingCounterHomeStateFitness extends State<JoggingCounterHomeFitness>
   }
 
   void _startCounting() {
-    _accelerometerSubscription = userAccelerometerEvents.listen(_countSteps);
+    _positionStreamSubscription = Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.best,
+        distanceFilter: 0,
+      ),
+    ).listen((Position position) {
+      _processLocation(position);
+    });
   }
 
   void _stopCounting() {
-    _accelerometerSubscription?.cancel();
+    _positionStreamSubscription?.cancel();
     _saveDataToLocalStorage();
   }
 
-  void _countSteps(UserAccelerometerEvent event) {
-    double magnitude =
-        sqrt(event.x * event.x + event.y * event.y + event.z * event.z);
-    DateTime currentTime = DateTime.now();
-    Duration timeDiff = currentTime.difference(_lastStepTime);
+  void _processLocation(Position position) {
+    if (_previousPosition != null) {
+      // Calculate the distance between the current and previous positions
+      double distance = Geolocator.distanceBetween(
+        _previousPosition!.latitude,
+        _previousPosition!.longitude,
+        position.latitude,
+        position.longitude,
+      );
 
-    if (magnitude > _sensitivity &&
-        timeDiff.inMilliseconds > 300 &&
-        magnitude - _lastMagnitude > 1.4) {
-      setState(() {
-        _joggingSteps++;
-        _totalSteps++;
-        _totalJoggingSteps++;
-        _updateJoggingSteps(
-          _joggingSteps,
-          _totalSteps,
-          _totalJoggingSteps,
-        );
-      });
-      _lastStepTime = currentTime;
+      // Add the new distance to the buffer
+      _distanceBuffer.add(distance);
 
-      // Check goal completion after each step
-      _checkGoalCompletion().then((_) {
-        if (!_isJoggingGoalActive) {
-          _stopCounting();
+      // Maintain buffer size
+      if (_distanceBuffer.length > _bufferSize) {
+        _distanceBuffer.removeAt(0);
+      }
+
+      // Calculate average distance and filter out noise
+      double averageDistance = _distanceBuffer.isNotEmpty
+          ? _distanceBuffer.reduce((a, b) => a + b) / _distanceBuffer.length
+          : 0;
+
+      // Noise reduction and step counting logic
+      bool isValidMovement = _isValidMovement(averageDistance, position.speed);
+
+      if (isValidMovement) {
+        setState(() {
+          _distanceTraveled += distance;
+        });
+
+        int estimatedSteps = (_distanceTraveled / 0.7).ceil();
+
+        // Add time-based filtering to prevent rapid step increments
+        DateTime now = DateTime.now();
+        bool isTimeSinceLastUpdateValid = _lastStepUpdateTime == null ||
+            now.difference(_lastStepUpdateTime!).inSeconds > 1;
+
+        if (estimatedSteps > _lastValidStepCount &&
+            isTimeSinceLastUpdateValid) {
           setState(() {
-            _isCounting = false;
+            _joggingSteps = estimatedSteps;
+            _totalSteps = estimatedSteps;
+            _totalJoggingSteps = estimatedSteps;
+            _lastValidStepCount = estimatedSteps;
+            _lastStepUpdateTime = now;
+            _updateJoggingSteps(
+              _joggingSteps,
+              _totalSteps,
+              _totalJoggingSteps,
+            );
           });
+
+          // Periodic goal check (every 10 steps)
+          if (_joggingSteps % 10 == 0) {
+            _checkGoalCompletion().then((_) {
+              if (!_isJoggingGoalActive) {
+                _stopCounting();
+                setState(() {
+                  _isCounting = false;
+                  _joggingSteps = 0;
+                  _selectedDate = DateTime.now();
+                });
+              }
+            });
+          }
         }
-      });
+      }
+
+      // Update the previous position
+      _previousPosition = position;
+    } else {
+      // First time setting the previous position
+      _previousPosition = position;
     }
-    _lastMagnitude = magnitude;
+  }
+
+  // New method to validate movement and filter out noise
+  bool _isValidMovement(double averageDistance, double speed) {
+    // Criteria for valid movement:
+    // 1. Minimum distance threshold
+    // 2. Reasonable speed range
+    // 3. Avoid extremely large or small movements
+    return averageDistance > 0.5 && // Minimum meaningful distance
+        averageDistance < 5.0 && // Maximum reasonable distance between updates
+        speed > 0.2 && // Moving
+        speed < 2.0; // Not in a vehicle
   }
 
   Future<void> _updateJoggingSteps(

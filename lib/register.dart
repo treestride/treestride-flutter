@@ -1,8 +1,6 @@
 // ignore_for_file: use_build_context_synchronously, unused_field
 
 import 'dart:async';
-import 'dart:convert';
-import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -136,12 +134,6 @@ class RegisterPageState extends State<Register> {
     }
   }
 
-  String _hashPassword(String password) {
-    var bytes = utf8.encode(password); // Convert the password to bytes
-    var digest = sha256.convert(bytes); // Hash the bytes
-    return digest.toString(); // Return the hashed password as a string
-  }
-
   String? _validatePhoneNumber(String? value) {
     if (value == null || value.isEmpty) {
       return 'Please enter your phone number';
@@ -202,7 +194,6 @@ class RegisterPageState extends State<Register> {
         await userCredential.user!.sendEmailVerification();
 
         String photoURL = await _uploadImage(_image!);
-        String hashedPassword = _hashPassword(_password);
 
         final defaultEndDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
 
@@ -212,11 +203,11 @@ class RegisterPageState extends State<Register> {
             'username': _username,
             'lowercaseUsername': _username.toLowerCase(),
             'email': _email,
-            'password': hashedPassword,
             'phoneNumber': _phoneNumber,
             'totalPoints': '0',
             'totalSteps': '0',
             'missionSteps': '0',
+            'groupMissionSteps': '0',
             'walkingSteps': '0',
             'walkingGoal': '0',
             'walkingGoalEndDate': defaultEndDate,

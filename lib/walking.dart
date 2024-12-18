@@ -1,15 +1,15 @@
 // ignore_for_file: unused_field, use_build_context_synchronously, deprecated_member_use
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:sensors_plus/sensors_plus.dart';
+import 'package:geolocator/geolocator.dart';
 
 import 'dart:async';
-import 'dart:math';
 import 'environmentalist.dart';
 import 'offline.dart';
 import 'user_data_provider.dart';
@@ -48,19 +48,27 @@ class WalkingCounterHome extends StatefulWidget {
 class WalkingCounterHomeState extends State<WalkingCounterHome>
     with WidgetsBindingObserver {
   bool _isCounting = false;
-  final double _sensitivity = 6;
-  double _lastMagnitude = 0;
   int _walkingSteps = 0;
   DateTime? _selectedDate;
   DateTime _currentDate = DateTime.now();
-  DateTime _lastStepTime = DateTime.now();
-  StreamSubscription<UserAccelerometerEvent>? _accelerometerSubscription;
   late Stream<List<ConnectivityResult>> _connectivityStream;
+  double _distanceTraveled = 0.0;
+  double _speed = 0.0;
+  Position? _previousPosition;
+  StreamSubscription<Position>? _positionStreamSubscription;
+  final List<double> _distanceBuffer = [];
+  final int _bufferSize = 5; // Number of recent measurements to consider
+  int _lastValidStepCount = 0;
+  DateTime? _lastStepUpdateTime;
+  List<String> walkingGoals = [];
+  String? selectedGoal;
 
   @override
   void initState() {
     super.initState();
     _initializeData();
+    fetchGoals();
+    _checkLocationPermission();
     WidgetsBinding.instance.addObserver(this);
     _connectivityStream = Connectivity().onConnectivityChanged;
     _checkConnection();
@@ -108,6 +116,167 @@ class WalkingCounterHomeState extends State<WalkingCounterHome>
     }
   }
 
+  Future<void> fetchGoals() async {
+    try {
+      final querySnapshot =
+          await FirebaseFirestore.instance.collection('walkingGoals').get();
+
+      final goals = querySnapshot.docs
+          .map((doc) => doc['goal'] as String)
+          .toList()
+        ..sort(); // Sort the goals
+
+      setState(() {
+        walkingGoals = goals;
+      });
+    } catch (e) {
+      _showErrorToast("Error fetching goals: $e");
+      setState(() {
+        walkingGoals = []; // Set an empty list to avoid infinite spinner
+      });
+    }
+  }
+
+  Future<void> _checkLocationPermission() async {
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied ||
+        permission == LocationPermission.deniedForever) {
+      permission = await Geolocator.requestPermission();
+      if (permission != LocationPermission.whileInUse &&
+          permission != LocationPermission.always) {
+        _showErrorToast("Location permission is required to count steps.");
+      }
+    }
+  }
+
+  void _toggleCounting() {
+    final provider = Provider.of<UserDataProvider>(context, listen: false);
+    if (provider.userData!['isWalkingGoalActive'] == 'false') {
+      _showToast("Please start a goal first!");
+      return;
+    }
+
+    setState(() {
+      _isCounting = !_isCounting;
+      if (_isCounting) {
+        _startCounting();
+      } else {
+        _stopCounting();
+      }
+    });
+  }
+
+  void _startCounting() {
+    _positionStreamSubscription = Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.best,
+        distanceFilter: 0,
+      ),
+    ).listen((Position position) {
+      _processLocation(position);
+    });
+  }
+
+  void _stopCounting() {
+    _positionStreamSubscription?.cancel();
+    final provider = Provider.of<UserDataProvider>(context, listen: false);
+    provider.saveDataToFirestore();
+  }
+
+  void _processLocation(Position position) {
+    if (_previousPosition != null) {
+      // Calculate the distance between the current and previous positions
+      double distance = Geolocator.distanceBetween(
+        _previousPosition!.latitude,
+        _previousPosition!.longitude,
+        position.latitude,
+        position.longitude,
+      );
+
+      // Add the new distance to the buffer
+      _distanceBuffer.add(distance);
+
+      // Maintain buffer size
+      if (_distanceBuffer.length > _bufferSize) {
+        _distanceBuffer.removeAt(0);
+      }
+
+      // Calculate average distance and filter out noise
+      double averageDistance = _distanceBuffer.isNotEmpty
+          ? _distanceBuffer.reduce((a, b) => a + b) / _distanceBuffer.length
+          : 0;
+
+      setState(() {
+        _speed = position.speed;
+      });
+
+      // Noise reduction and step counting logic
+      bool isValidMovement = _isValidMovement(averageDistance, position.speed);
+
+      if (isValidMovement) {
+        setState(() {
+          _distanceTraveled += distance;
+        });
+
+        int estimatedSteps = (_distanceTraveled / 0.7).ceil();
+
+        // Add time-based filtering to prevent rapid step increments
+        DateTime now = DateTime.now();
+        bool isTimeSinceLastUpdateValid = _lastStepUpdateTime == null ||
+            now.difference(_lastStepUpdateTime!).inSeconds > 1;
+
+        if (estimatedSteps > _lastValidStepCount &&
+            isTimeSinceLastUpdateValid) {
+          setState(() {
+            _walkingSteps = estimatedSteps;
+            _lastValidStepCount = estimatedSteps;
+            _lastStepUpdateTime = now;
+            _updateWalkingSteps(_walkingSteps);
+          });
+
+          // Periodic goal check (every 10 steps)
+          if (_walkingSteps % 10 == 0) {
+            final provider =
+                Provider.of<UserDataProvider>(context, listen: false);
+            provider.checkGoalCompletion('walking').then((_) {
+              if (provider.userData!['isWalkingGoalActive'] == 'false') {
+                _stopCounting();
+                setState(() {
+                  _isCounting = false;
+                  _walkingSteps = 0;
+                  _selectedDate = DateTime.now();
+                });
+              }
+            });
+          }
+        }
+      }
+
+      // Update the previous position
+      _previousPosition = position;
+    } else {
+      // First time setting the previous position
+      _previousPosition = position;
+    }
+  }
+
+  // New method to validate movement and filter out noise
+  bool _isValidMovement(double averageDistance, double speed) {
+    // Criteria for valid movement:
+    // 1. Minimum distance threshold
+    // 2. Reasonable speed range
+    // 3. Avoid extremely large or small movements
+    return averageDistance > 0.5 && // Minimum meaningful distance
+        averageDistance < 5.0 && // Maximum reasonable distance between updates
+        speed > 0.2 && // Moving
+        speed < 2.0; // Not in a vehicle
+  }
+
+  Future<void> _updateWalkingSteps(int newStepCount) async {
+    final provider = Provider.of<UserDataProvider>(context, listen: false);
+    await provider.updateSteps('walking', newStepCount);
+  }
+
   void _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -143,67 +312,6 @@ class WalkingCounterHomeState extends State<WalkingCounterHome>
         'walkingGoalEndDate': DateFormat('yyyy-MM-dd').format(picked),
       });
     }
-  }
-
-  void _toggleCounting() {
-    final provider = Provider.of<UserDataProvider>(context, listen: false);
-    if (provider.userData!['isWalkingGoalActive'] == 'false') {
-      _showToast("Please start a goal first!");
-      return;
-    }
-
-    setState(() {
-      _isCounting = !_isCounting;
-      if (_isCounting) {
-        _startCounting();
-      } else {
-        _stopCounting();
-      }
-    });
-  }
-
-  void _startCounting() {
-    _accelerometerSubscription = userAccelerometerEvents.listen(_countSteps);
-  }
-
-  void _stopCounting() {
-    _accelerometerSubscription?.cancel();
-    final provider = Provider.of<UserDataProvider>(context, listen: false);
-    provider.saveDataToFirestore();
-  }
-
-  void _countSteps(UserAccelerometerEvent event) {
-    double magnitude =
-        sqrt(event.x * event.x + event.y * event.y + event.z * event.z);
-    DateTime currentTime = DateTime.now();
-    Duration timeDiff = currentTime.difference(_lastStepTime);
-
-    if (magnitude > _sensitivity &&
-        timeDiff.inMilliseconds > 300 &&
-        magnitude - _lastMagnitude > 1.4) {
-      setState(() {
-        _walkingSteps++;
-        _updateWalkingSteps(_walkingSteps);
-      });
-      _lastStepTime = currentTime;
-
-      // Check goal completion after each step
-      final provider = Provider.of<UserDataProvider>(context, listen: false);
-      provider.checkGoalCompletion('walking').then((_) {
-        if (provider.userData!['isWalkingGoalActive'] == 'false') {
-          _stopCounting();
-          setState(() {
-            _isCounting = false;
-          });
-        }
-      });
-    }
-    _lastMagnitude = magnitude;
-  }
-
-  Future<void> _updateWalkingSteps(int newStepCount) async {
-    final provider = Provider.of<UserDataProvider>(context, listen: false);
-    await provider.updateSteps('walking', newStepCount);
   }
 
   void _showToast(String message) {
@@ -282,9 +390,6 @@ class WalkingCounterHomeState extends State<WalkingCounterHome>
               ? (int.parse(currentSteps) / int.parse(walkingGoal))
                   .clamp(0.0, 1.0)
               : 0.0;
-
-          // Check if user is close to goal
-          bool isCloseToGoal = isWalkingGoalActive && progress >= 0.7;
 
           return PopScope(
             canPop: false,
@@ -426,18 +531,6 @@ class WalkingCounterHomeState extends State<WalkingCounterHome>
                                   color: Color(0xFF08DAD6),
                                 ),
                               ),
-                              if (isCloseToGoal)
-                                const Padding(
-                                  padding: EdgeInsets.only(top: 10),
-                                  child: Text(
-                                    textAlign: TextAlign.center,
-                                    'Almost there! Keep going!',
-                                    style: TextStyle(
-                                      color: Colors.orange,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
                             ],
                             const SizedBox(height: 14),
                             Text(
@@ -456,40 +549,42 @@ class WalkingCounterHomeState extends State<WalkingCounterHome>
                             ),
                             const SizedBox(height: 14),
                             Center(
-                              child: SizedBox(
-                                width: 250,
-                                child: DropdownButtonFormField<String>(
-                                  value:
-                                      walkingGoal == '0' ? null : walkingGoal,
-                                  onChanged: isWalkingGoalActive
-                                      ? null
-                                      : (String? newValue) {
-                                          if (newValue != null) {
-                                            userDataProvider.updateUserData({
-                                              'walkingGoal': newValue,
-                                            });
-                                          }
-                                        },
-                                  items: [
-                                    "100",
-                                    "3000",
-                                    "5000",
-                                    "10000",
-                                    "20000"
-                                  ].map<DropdownMenuItem<String>>(
-                                      (String value) {
-                                    return DropdownMenuItem<String>(
-                                      value: value,
-                                      child: Text(
-                                          "${NumberFormat('#,###').format(int.parse(value))} STEPS"),
-                                    );
-                                  }).toList(),
-                                  decoration: _dropdownDecoration.copyWith(
-                                    enabled: !isWalkingGoalActive,
-                                  ),
-                                  hint: const Text("0 STEP"),
-                                ),
-                              ),
+                              child: walkingGoals.isEmpty
+                                  ? const CircularProgressIndicator(
+                                      color: Color(0xFF08DAD6),
+                                      strokeWidth: 6,
+                                    )
+                                  : SizedBox(
+                                      width: 250,
+                                      child: DropdownButtonFormField<String>(
+                                        value: walkingGoal == '0'
+                                            ? null
+                                            : walkingGoal,
+                                        onChanged: isWalkingGoalActive
+                                            ? null
+                                            : (String? newValue) {
+                                                if (newValue != null) {
+                                                  userDataProvider
+                                                      .updateUserData({
+                                                    'walkingGoal': newValue,
+                                                  });
+                                                }
+                                              },
+                                        items: walkingGoals.map((goal) {
+                                          return DropdownMenuItem<String>(
+                                            value: goal,
+                                            child: Text(
+                                              "${NumberFormat('#,###').format(int.parse(goal))} STEPS",
+                                            ),
+                                          );
+                                        }).toList(),
+                                        decoration:
+                                            _dropdownDecoration.copyWith(
+                                          enabled: !isWalkingGoalActive,
+                                        ),
+                                        hint: const Text("0 STEP"),
+                                      ),
+                                    ),
                             ),
                             const SizedBox(height: 14),
                             Center(
@@ -656,8 +751,6 @@ class WalkingCounterHomeState extends State<WalkingCounterHome>
                 userDataProvider.resetGoal('walking');
                 setState(() {
                   _walkingSteps = 0;
-                  _lastMagnitude = 0;
-                  _lastStepTime = DateTime.now();
                   _selectedDate = DateTime.now();
                 });
                 Navigator.of(context).pop();

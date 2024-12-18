@@ -5,15 +5,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
 
 class UserDataProvider with ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin =
-      FlutterLocalNotificationsPlugin();
 
   bool _dataChanged = false;
   Map<String, dynamic>? _userData;
@@ -41,13 +38,13 @@ class UserDataProvider with ChangeNotifier {
         if (doc.exists) {
           _userData = _extractUserData(doc.data() as Map<String, dynamic>);
         } else {
-          _showErrorToastAndNotification('User data not found!');
+          _showToast('User data not found!', isError: true);
         }
       } else {
-        _showErrorToastAndNotification('No user logged in!');
+        _showToast('No user logged in!', isError: true);
       }
     } catch (e) {
-      _showErrorToastAndNotification('Failed to load user data: $e');
+      _showToast('Failed to load user data: $e', isError: true);
     }
     _dataChanged = true;
     notifyListeners();
@@ -63,6 +60,7 @@ class UserDataProvider with ChangeNotifier {
       'totalPoints': data['totalPoints']?.toString() ?? '0',
       'totalSteps': data['totalSteps']?.toString() ?? '0',
       'missionSteps': data['missionSteps']?.toString() ?? '0',
+      'groupMissionSteps': data['groupMissionSteps']?.toString() ?? '0',
       'walkingSteps': data['walkingSteps']?.toString() ?? '0',
       'walkingGoal': data['walkingGoal']?.toString() ?? '0',
       'walkingGoalEndDate': _formatDate(data['walkingGoalEndDate']),
@@ -99,11 +97,11 @@ class UserDataProvider with ChangeNotifier {
           'endDate': data['endDate']?.toString() ?? 'N/A',
         };
       } else {
-        _showErrorToastAndNotification('Mission data not found');
+        _showToast('Mission data not found', isError: true);
         _missionData = {'steps': 'N/A', 'reward': 'N/A', 'endDate': 'N/A'};
       }
     } catch (e) {
-      _showErrorToastAndNotification('Failed to load mission data: $e');
+      _showToast('Failed to load mission data: $e', isError: true);
       _missionData = {'steps': 'N/A', 'reward': 'N/A', 'endDate': 'N/A'};
     }
     _dataChanged = true;
@@ -138,6 +136,47 @@ class UserDataProvider with ChangeNotifier {
         }
       }
     });
+
+    // Add a listener for the mission queue
+    _firestore.collection('missionQueue').snapshots().listen((snapshot) {
+      // Optionally update local queue state
+    });
+  }
+
+  Future<void> checkMissionStatus() async {
+    if (_missionData == null) return;
+
+    DateTime now = DateTime.now();
+    DateTime missionEnd = DateTime.parse(_missionData!['endDate']);
+
+    if (now.isAfter(missionEnd)) {
+      // Load next mission from queue
+      await loadNextMissionFromQueue();
+    }
+  }
+
+  Future<void> loadNextMissionFromQueue() async {
+    QuerySnapshot queueSnapshot = await _firestore
+        .collection('missionQueue')
+        .orderBy('endDate')
+        .limit(1)
+        .get();
+
+    if (queueSnapshot.docs.isNotEmpty) {
+      DocumentSnapshot nextMissionDoc = queueSnapshot.docs.first;
+      Map<String, dynamic> nextMissionData =
+          nextMissionDoc.data() as Map<String, dynamic>;
+
+      // Set the next mission as the active mission
+      await _firestore
+          .collection('mission')
+          .doc('currentMission')
+          .set(nextMissionData);
+      await nextMissionDoc.reference.delete();
+
+      // Fetch the updated mission data
+      await fetchMissionData();
+    }
   }
 
   Future<void> _resetUserMissionProgress() async {
@@ -145,7 +184,7 @@ class UserDataProvider with ChangeNotifier {
     _userData!['isMissionCompleted'] = 'false';
     _dataChanged = true;
     await saveDataToFirestore();
-    _showToastAndNotification("Mission Updated!");
+    _showToast("Mission Updated!");
   }
 
   @override
@@ -164,7 +203,7 @@ class UserDataProvider with ChangeNotifier {
         _dataChanged = false;
       }
     } catch (e) {
-      _showErrorToastAndNotification('Failed to save data: $e');
+      _showToast('Failed to save data: $e', isError: true);
     }
   }
 
@@ -175,7 +214,7 @@ class UserDataProvider with ChangeNotifier {
     _dataChanged = true;
     notifyListeners();
     await saveDataToFirestore();
-    _showToastAndNotification("${type.capitalize()} Goal Started!");
+    _showToast("${type.capitalize()} Goal Started!");
   }
 
   Future<void> resetGoal(String type) async {
@@ -186,21 +225,47 @@ class UserDataProvider with ChangeNotifier {
     _dataChanged = true;
     notifyListeners();
     await saveDataToFirestore();
-    _showToastAndNotification("${type.capitalize()} Goal Was Reset!");
+    _showToast("${type.capitalize()} Goal Was Reset!");
   }
 
   Future<void> updateSteps(String type, int newStepCount) async {
     int currentSteps = int.parse(_userData!['${type}Steps']);
     int stepsDifference = newStepCount - currentSteps;
+
     if (stepsDifference > 0) {
+      // Fetch the current group mission status
+      String? currentMissionId = _userData!['currentGroupMissionId'];
+      if (currentMissionId != null) {
+        final missionDoc = await _firestore
+            .collection('group_missions')
+            .doc(currentMissionId)
+            .get();
+
+        if (missionDoc.exists && missionDoc.data()?['status'] != 'active') {
+          // If the mission is not active, do not increment groupMissionSteps
+          return;
+        }
+      }
+
+      // Increment steps for the specific activity type
       _userData!['${type}Steps'] = (currentSteps + stepsDifference).toString();
       _userData!['totalSteps'] =
           (int.parse(_userData!['totalSteps']) + stepsDifference).toString();
+
+      // Increment group mission steps only for active missions
+      if (currentMissionId != null) {
+        _userData!['groupMissionSteps'] =
+            (int.parse(_userData!['groupMissionSteps']) + stepsDifference)
+                .toString();
+      }
+
+      // Increment mission steps only if the mission isn't completed
       if (_userData!['isMissionCompleted'] == 'false') {
         _userData!['missionSteps'] =
             (int.parse(_userData!['missionSteps']) + stepsDifference)
                 .toString();
       }
+
       _dataChanged = true;
       notifyListeners();
       await checkMissionCompletion();
@@ -231,7 +296,7 @@ class UserDataProvider with ChangeNotifier {
           ? missionReward
           : (userMissionSteps / missionSteps * missionReward).round();
       _updateUserDataAfterMission(rewardPoints);
-      _showToastAndNotification(_getMissionCompletionMessage(
+      _showToast(_getMissionCompletionMessage(
         userMissionSteps,
         missionSteps,
         rewardPoints,
@@ -243,7 +308,7 @@ class UserDataProvider with ChangeNotifier {
       _dataChanged = true;
       notifyListeners();
       saveDataToFirestore();
-      _showToastAndNotification(
+      _showToast(
           "The current mission has already ended. Please wait for the next mission");
     }
   }
@@ -275,11 +340,22 @@ class UserDataProvider with ChangeNotifier {
     DateTime now = DateTime.now();
 
     if (currentSteps >= goalSteps || now.isAfter(endDate)) {
-      int maxReward = goalSteps;
+      // Determine the reward multiplier based on the activity type
+      double rewardMultiplier = 1.0;
+      if (type == 'walking') {
+        rewardMultiplier = 1.1; // 10% reward bonus
+      } else if (type == 'jogging') {
+        rewardMultiplier = 1.2; // 20% reward bonus
+      } else if (type == 'running') {
+        rewardMultiplier = 1.3; // 30% reward bonus
+      }
+
+      int maxReward = (goalSteps * rewardMultiplier).round();
       int actualReward = (currentSteps >= goalSteps)
           ? maxReward
           : (maxReward * currentSteps / goalSteps).round();
 
+      // Update user data with the calculated reward
       _userData!['totalPoints'] =
           (int.parse(_userData!['totalPoints']) + actualReward).toString();
       _userData!['${type}GoalEndDate'] = _getDefaultEndDate();
@@ -290,7 +366,8 @@ class UserDataProvider with ChangeNotifier {
       notifyListeners();
       await saveDataToFirestore();
 
-      _showToastAndNotification(currentSteps >= goalSteps
+      // Show appropriate notification message
+      _showToast(currentSteps >= goalSteps
           ? "Congratulations! You've completed your $type goal and earned $actualReward points!"
           : "Your $type goal period has ended. You've earned $actualReward points based on your progress!");
     }
@@ -383,29 +460,6 @@ class UserDataProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> initNotifications() async {
-    const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
-    const DarwinInitializationSettings initializationSettingsIOS =
-        DarwinInitializationSettings();
-    const InitializationSettings initializationSettings =
-        InitializationSettings(
-      android: initializationSettingsAndroid,
-      iOS: initializationSettingsIOS,
-    );
-    await _flutterLocalNotificationsPlugin.initialize(initializationSettings);
-  }
-
-  Future<void> _showToastAndNotification(String message) async {
-    await _showToast(message);
-    await _showNotification('TreeStride Update', message);
-  }
-
-  Future<void> _showErrorToastAndNotification(String message) async {
-    await _showToast(message, isError: true);
-    await _showNotification('Error', message);
-  }
-
   Future<void> _showToast(String message, {bool isError = false}) async {
     Fluttertoast.showToast(
       msg: message,
@@ -413,28 +467,6 @@ class UserDataProvider with ChangeNotifier {
       gravity: ToastGravity.BOTTOM,
       backgroundColor: isError ? Colors.red : Colors.black,
       textColor: Colors.white,
-    );
-  }
-
-  Future<void> _showNotification(String title, String message) async {
-    const AndroidNotificationDetails androidPlatformChannelSpecifics =
-        AndroidNotificationDetails(
-      'TreeStride',
-      'TreeStride Notification',
-      importance: Importance.max,
-      priority: Priority.high,
-    );
-    const DarwinNotificationDetails iOSPlatformChannelSpecifics =
-        DarwinNotificationDetails();
-    const NotificationDetails platformChannelSpecifics = NotificationDetails(
-      android: androidPlatformChannelSpecifics,
-      iOS: iOSPlatformChannelSpecifics,
-    );
-    await _flutterLocalNotificationsPlugin.show(
-      0,
-      title,
-      message,
-      platformChannelSpecifics,
     );
   }
 }
